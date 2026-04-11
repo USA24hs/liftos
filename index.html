@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Timer Profissional | Ciclo de Secagem</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: radial-gradient(circle at 20% 30%, #141414, #0a0a0a);
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(28, 28, 32, 0.96);
+            backdrop-filter: blur(0px);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(255, 255, 255, 0.05) inset;
+            border: 1px solid rgba(255, 107, 0, 0.2);
+            overflow: hidden;
+            transition: max-width 0.3s ease;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1f1f24 0%, #141417 100%);
+            padding: 14px 20px 10px 20px;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .card-header h2 {
+            font-size: 1.45rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ff9a44, #ff6b00);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-header h2::before {
+            content: "⏲️";
+            font-size: 1.5rem;
+            background: none;
+            -webkit-background-clip: unset;
+            color: #ff8c42;
+        }
+
+        .sub {
+            font-size: 0.7rem;
+            color: #9e9e9e;
+            margin-top: 4px;
+            letter-spacing: 0.2px;
+            border-left: 2px solid #ff6b00;
+            padding-left: 8px;
+        }
+
+        .card-content {
+            padding: 14px 18px 20px;
+        }
+
+        /* Botão de Ocultar */
+        .btn-toggle-config {
+            background: transparent;
+            border: 1px solid rgba(255, 107, 0, 0.3);
+            color: #ff9a44;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+        .btn-toggle-config:hover {
+            background: rgba(255, 107, 0, 0.1);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin: 12px 0 8px 0;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        .section-title h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #c0c0c0;
+            background: rgba(255, 107, 0, 0.12);
+            padding: 3px 10px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        .badge-icon {
+            font-size: 0.9rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .col {
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px 8px;
+            background-color: #1e1e22;
+            border: 1.5px solid #2e2e38;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #f2f2f2;
+            text-align: center;
+            transition: all 0.2s;
+            font-family: monospace;
+            letter-spacing: 0.3px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff6b00;
+            background-color: #26262c;
+            box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.2);
+        }
+
+        .btn-agora {
+            background: #2c2c34;
+            border: 1px solid #ff6b00;
+            color: #ff9a44;
+            font-weight: bold;
+            padding: 8px 10px;
+            border-radius: 26px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 68px;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            height: 38px;
+        }
+
+        .btn-agora:active {
+            transform: scale(0.96);
+            background: #3a3a44;
+            border-color: #ffaa55;
+        }
+
+        /* RESULTADO BOX */
+        .result-box {
+            margin-top: 20px;
+            background: #151518;
+            border-radius: 24px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 107, 0, 0.25);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* bloco do término */
+        .result-main {
+            text-align: center;
+            background: linear-gradient(145deg, #101014, #18181c);
+            padding: 16px 8px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 107, 0, 0.4);
+            margin-bottom: 16px;
+        }
+
+        .result-main-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #ff9a44;
+            letter-spacing: 1.2px;
+            margin-bottom: 6px;
+        }
+
+        .result-main-time {
+            font-size: 3rem;
+            font-weight: 800;
+            font-family: monospace;
+            color: #6ef0a0;
+            text-shadow: 0 0 8px rgba(110, 240, 160, 0.4);
+            letter-spacing: 2px;
+            line-height: 1.1;
+        }
+
+        .next-day-indicator {
+            display: block;
+            font-size: 0.8rem;
+            color: #ff6b00;
+            font-weight: 600;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #b0b0b8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .result-value {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #eaeef2;
+            background: #1f1f26;
+            padding: 3px 10px;
+            border-radius: 40px;
+            letter-spacing: 0.2px;
+        }
+
+        /* Estilo especial para o contador regressivo */
+        .countdown-value {
+            background: linear-gradient(135deg, #002b20, #003d2b);
+            color: #00ff9d;
+            font-family: monospace;
+            font-size: 1rem;
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            animation: pulse-glow 2s infinite;
+        }
+
+        .countdown-finished {
+            background: #3d1a00;
+            color: #ffaa55;
+            border-color: #ff6b00;
+            animation: none;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.1); }
+            50% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.5); }
+            100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.1); }
+        }
+
+        .total-duration-value {
+            background: linear-gradient(135deg, #2a2a30, #202025);
+            color: #ffcf9a;
+            font-weight: 700;
+            border: 0.5px solid #ff6b0040;
+        }
+
+        .footnote {
+            font-size: 0.6rem;
+            text-align: center;
+            margin-top: 12px;
+            color: #6a6a72;
+            border-top: 1px dashed #2c2c34;
+            padding-top: 10px;
+        }
+
+        /* Classes para ocultar/mostrar */
+        .config-panel {
+            display: block;
+        }
+        .config-panel.hidden {
+            display: none;
+        }
+
+        @media (max-width: 560px) {
+            .card-content { padding: 12px 14px 18px; }
+            .result-main-time { font-size: 2.5rem; letter-spacing: 1px; }
+            input { padding: 6px 6px; font-size: 0.85rem; }
+            .btn-agora { width: 62px; font-size: 0.7rem; padding: 6px 6px; height: 34px; }
+            .result-value { font-size: 0.78rem; padding: 2px 8px; }
+            .countdown-value { font-size: 0.9rem; }
+            .result-label { font-size: 0.7rem; }
+            .row { gap: 8px; }
+            .section-title h3 { font-size: 0.7rem; padding: 2px 8px; }
+            .btn-toggle-config { font-size: 0.7rem; padding: 4px 8px; }
+            .card-header h2 { font-size: 1.2rem; }
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { opacity: 0.4; height: 18px; }
+        input[type=time] { font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="card-header">
+        <div class="header-text">
+            <h2>Ciclo de Secagem</h2>
+            <div class="sub">Pré-aquecimento + Ciclos + Resfriamento</div>
+        </div>
+        <button class="btn-toggle-config" onclick="toggleConfigs()">Ocultar</button>
+    </div>
+    
+    <div class="card-content">
+        <!-- PAINEL DE CONFIGURAÇÕES -->
+        <div id="configPanel" class="config-panel">
+            <!-- 1. PRÉ-AQUECIMENTO -->
+            <div class="section-title">
+                <span class="badge-icon">🔥</span>
+                <h3>1. Pré-aquecimento</h3>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>⏺ Ligado (min)</label>
+                    <input type="number" id="preLigado" value="15" step="1" inputmode="numeric">
+                </div>
+                <div class="col">
+                    <label>⏸ Desligado (min)</label>
+                    <input type="number" id="preDesligado" value="1" step="1" inputmode="numeric">
+                </div>
+            </div>
+
+            <!-- 2. CICLOS DE SECAGEM -->
+            <div class="section-title">
+                <span class="badge-icon">🔄</span>
+                <h3>2. Ciclos de secagem</h3>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>⚡ Ligado (min)</label>
+                    <input type="number" id="cicloLigado" value="6" step="1" inputmode="numeric">
+                </div>
+                <div class="col">
+                    <label>⏸ Desligado (min)</label>
+                    <input type="number" id="cicloDesligado" value="1" step="1" inputmode="numeric">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>🔁 Quantidade de ciclos</label>
+                <input type="number" id="qtdCiclos" value="6" step="1" inputmode="numeric">
+            </div>
+
+            <!-- 3. RESFRIAMENTO FINAL -->
+            <div class="section-title">
+                <span class="badge-icon">❄️</span>
+                <h3>3. Resfriamento final</h3>
+            </div>
+            <div class="input-group">
+                <label>Duração (min)</label>
+                <input type="number" id="resfriamento" value="10" step="1" inputmode="numeric">
+            </div>
+
+            <!-- INÍCIO + BOTÃO AGORA -->
+            <div class="section-title">
+                <span class="badge-icon">⏰</span>
+                <h3>Horário de partida</h3>
+            </div>
+            <div class="row" style="margin-bottom: 6px;">
+                <div class="col">
+                    <label>Hora de início</label>
+                    <input type="time" id="horaInicio" step="60">
+                </div>
+                <button class="btn-agora" onclick="setarAgora()">AGORA</button>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div class="result-box">
+            <div class="result-main">
+                <div class="result-main-label">🏁 TÉRMINO DO PROCESSO</div>
+                <div class="result-main-time" id="horarioFinal">--:--</div>
+                <span class="next-day-indicator" id="dayIndicator"></span>
+            </div>
+
+            <div class="result-row">
+                <span class="result-label">⏳ Tempo restante:</span>
+                <span class="result-value countdown-value" id="liveCountdown">--:--:--</span>
+            </div>
+
+            <div class="result-row">
+                <span class="result-label">📊 Total de ciclos:</span>
+                <span class="result-value" id="displayCiclos">6</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">⏱️ Duração total:</span>
+                <span class="result-value total-duration-value" id="displayDuracao">-- min</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">🔥 Pré-aquecimento:</span>
+                <span class="result-value" id="preheatTotal">-- min</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">🔄 Ciclos (total):</span>
+                <span class="result-value" id="cyclesTotal">-- min</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">❄️ Resfriamento:</span>
+                <span class="result-value" id="coolingTotal">-- min</span>
+            </div>
+        </div>
+        <div class="footnote">
+            ⚡ Dados salvos automaticamente no navegador.
+        </div>
+    </div>
+</div>
+
+<script>
+    // DOM elements
+    const preLigado = document.getElementById('preLigado');
+    const preDesligado = document.getElementById('preDesligado');
+    const cicloLigado = document.getElementById('cicloLigado');
+    const cicloDesligado = document.getElementById('cicloDesligado');
+    const qtdCiclos = document.getElementById('qtdCiclos');
+    const resfriamento = document.getElementById('resfriamento');
+    const horaInicio = document.getElementById('horaInicio');
+    
+    const displayCiclosSpan = document.getElementById('displayCiclos');
+    const displayDuracaoSpan = document.getElementById('displayDuracao');
+    const horarioFinalSpan = document.getElementById('horarioFinal');
+    const dayIndicatorSpan = document.getElementById('dayIndicator');
+    const liveCountdownSpan = document.getElementById('liveCountdown');
+    const preheatTotalSpan = document.getElementById('preheatTotal');
+    const cyclesTotalSpan = document.getElementById('cyclesTotal');
+    const coolingTotalSpan = document.getElementById('coolingTotal');
+    const configPanel = document.getElementById('configPanel');
+    const toggleBtn = document.querySelector('.btn-toggle-config');
+
+    // Variável global para o intervalo do contador
+    let countdownInterval = null;
+    let endDateCache = null;
+
+    // --- FUNÇÕES DE ARMAZENAMENTO (LOCALSTORAGE) ---
+
+    function salvarDados() {
+        const config = {
+            preLigado: preLigado.value,
+            preDesligado: preDesligado.value,
+            cicloLigado: cicloLigado.value,
+            cicloDesligado: cicloDesligado.value,
+            qtdCiclos: qtdCiclos.value,
+            resfriamento: resfriamento.value,
+            horaInicio: horaInicio.value,
+            // Salva estado do painel (oculto/mostrando)
+            isHidden: configPanel.classList.contains('hidden')
+        };
+        localStorage.setItem('timerConfig', JSON.stringify(config));
+    }
+
+    function carregarDados() {
+        const saved = localStorage.getItem('timerConfig');
+        if (saved) {
+            const config = JSON.parse(saved);
+            // Restaura valores apenas se existirem
+            if(config.preLigado !== undefined) preLigado.value = config.preLigado;
+            if(config.preDesligado !== undefined) preDesligado.value = config.preDesligado;
+            if(config.cicloLigado !== undefined) cicloLigado.value = config.cicloLigado;
+            if(config.cicloDesligado !== undefined) cicloDesligado.value = config.cicloDesligado;
+            if(config.qtdCiclos !== undefined) qtdCiclos.value = config.qtdCiclos;
+            if(config.resfriamento !== undefined) resfriamento.value = config.resfriamento;
+            if(config.horaInicio !== undefined) horaInicio.value = config.horaInicio;
+            
+            // Restaura estado visual do painel
+            if (config.isHidden) {
+                configPanel.classList.add('hidden');
+                toggleBtn.textContent = "Mostrar";
+            } else {
+                configPanel.classList.remove('hidden');
+                toggleBtn.textContent = "Ocultar";
+            }
+            
+            return true; // Indica que dados foram carregados
+        }
+        return false; // Não havia dados
+    }
+
+    // --- LÓGICA DO TIMER ---
+
+    function formatHoursMinutes(totalMinutes) {
+        if (isNaN(totalMinutes) || totalMinutes < 0) return "0min";
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours === 0) return `${minutes}min`;
+        if (minutes === 0) return `${hours}h`;
+        return `${hours}h ${minutes}min`;
+    }
+
+    function padZero(num) {
+        return String(num).padStart(2, '0');
+    }
+
+    function calcular() {
+        const preLig = Math.max(0, parseInt(preLigado.value) || 0);
+        const preDes = Math.max(0, parseInt(preDesligado.value) || 0);
+        const cicLig = Math.max(0, parseInt(cicloLigado.value) || 0);
+        const cicDes = Math.max(0, parseInt(cicloDesligado.value) || 0);
+        let qtd = Math.max(0, parseInt(qtdCiclos.value) || 0);
+        const resf = Math.max(0, parseInt(resfriamento.value) || 0);
+        
+        qtd = Math.floor(qtd);
+        
+        const tempoPre = preLig + preDes;
+        const tempoCiclosTotal = (cicLig + cicDes) * qtd;
+        const tempoTotal = tempoPre + tempoCiclosTotal + resf;
+        
+        displayCiclosSpan.innerText = qtd;
+        
+        const duracaoFormatadaHoras = formatHoursMinutes(tempoTotal);
+        displayDuracaoSpan.innerText = `${tempoTotal} min (${duracaoFormatadaHoras})`;
+        
+        preheatTotalSpan.innerText = `${tempoPre} min (${formatHoursMinutes(tempoPre)})`;
+        cyclesTotalSpan.innerText = `${tempoCiclosTotal} min (${formatHoursMinutes(tempoCiclosTotal)})`;
+        coolingTotalSpan.innerText = `${resf} min (${formatHoursMinutes(resf)})`;
+        
+        const horaStr = horaInicio.value;
+        if (!horaStr || horaStr.length < 4) {
+            horarioFinalSpan.innerText = "--:--";
+            dayIndicatorSpan.innerText = "";
+            liveCountdownSpan.innerText = "--:--:--";
+            clearInterval(countdownInterval);
+            return;
+        }
+        
+        const [hora, minuto] = horaStr.split(':').map(Number);
+        if (isNaN(hora) || isNaN(minuto)) {
+            horarioFinalSpan.innerText = "--:--";
+            return;
+        }
+        
+        // Lógica de data real
+        const now = new Date();
+        // Importante: Criar a data baseada na data ATUAL, mas com a hora definida pelo usuário
+        // Se o usuário definir 23:00 e agora são 22:00, o início é hoje.
+        // Se o usuário definir 10:00 e agora são 14:00, o script assume que começou hoje (passado).
+        const dataBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hora, minuto, 0);
+        
+        const diaInicial = dataBase.getDate();
+        
+        // Calcula data final
+        endDateCache = new Date(dataBase.getTime() + tempoTotal * 60000);
+        
+        // Atualiza Horário Final
+        const hFinal = String(endDateCache.getHours()).padStart(2, '0');
+        const mFinal = String(endDateCache.getMinutes()).padStart(2, '0');
+        horarioFinalSpan.innerText = `${hFinal}:${mFinal}`;
+        
+        // Indicador de dia
+        const diaFinal = endDateCache.getDate();
+        const diffDays = Math.round((endDateCache - dataBase) / (1000 * 60 * 60 * 24));
+        
+        if (diaFinal !== diaInicial || diffDays > 0) {
+            dayIndicatorSpan.innerText = diffDays > 0 ? `📅 +${diffDays} dia(s)` : "📅 Vira o dia";
+        } else {
+            dayIndicatorSpan.innerText = "";
+        }
+
+        iniciarContador();
+        salvarDados(); // Salva sempre que calcula
+    }
+    
+    function iniciarContador() {
+        clearInterval(countdownInterval);
+        
+        const tick = () => {
+            if (!endDateCache) return;
+            
+            const now = new Date();
+            const distance = endDateCache - now;
+            
+            if (distance < 0) {
+                liveCountdownSpan.innerText = "FINALIZADO";
+                liveCountdownSpan.classList.add('countdown-finished');
+                clearInterval(countdownInterval);
+                return;
+            }
+            
+            liveCountdownSpan.classList.remove('countdown-finished');
+            
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            liveCountdownSpan.innerText = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+        };
+
+        tick(); 
+        countdownInterval = setInterval(tick, 1000);
+    }
+
+    function toggleConfigs() {
+        const isHidden = configPanel.classList.toggle('hidden');
+        toggleBtn.textContent = isHidden ? "Mostrar" : "Ocultar";
+        salvarDados(); // Salva preferência do painel
+    }
+    
+    function setarAgora() {
+        const agora = new Date();
+        const horas = String(agora.getHours()).padStart(2, '0');
+        const minutos = String(agora.getMinutes()).padStart(2, '0');
+        horaInicio.value = `${horas}:${minutos}`;
+        calcular(); // Calcula e Salva
+    }
+    
+    // Event Listeners
+    const allInputs = [
+        preLigado, preDesligado, cicloLigado, cicloDesligado,
+        qtdCiclos, resfriamento, horaInicio
+    ];
+    
+    allInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', calcular);
+            input.addEventListener('change', calcular);
+        }
+    });
+    
+    // Inicialização
+    window.onload = () => {
+        const loaded = carregarDados();
+        // Se não carregou nada (primeiro uso), define o horário atual
+        if (!loaded) {
+            setarAgora();
+        } else {
+            // Se carregou, apenas calcula com os dados recuperados
+            calcular();
+        }
+    };
+
+    // Garante salvar ao sair ou mudar aba (evento pagehide é mais confiável em mobile)
+    window.addEventListener('pagehide', salvarDados);
+    
+</script>
+</body>
+</html>
