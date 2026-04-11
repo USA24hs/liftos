@@ -83,7 +83,6 @@
             padding: 14px 18px 20px;
         }
 
-        /* Botão de Ocultar */
         .btn-toggle-config {
             background: transparent;
             border: 1px solid rgba(255, 107, 0, 0.3);
@@ -206,13 +205,13 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
         }
 
-        /* bloco do término */
+        /* Bloco principal: AGORA É O TEMPO RESTANTE */
         .result-main {
             text-align: center;
             background: linear-gradient(145deg, #101014, #18181c);
             padding: 16px 8px;
             border-radius: 24px;
-            border: 1px solid rgba(255, 107, 0, 0.4);
+            border: 1px solid rgba(0, 255, 157, 0.3); /* Borda verde para destaque */
             margin-bottom: 16px;
         }
 
@@ -220,27 +219,28 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             font-weight: 600;
-            color: #ff9a44;
+            color: #6ef0a0; /* Verde */
             letter-spacing: 1.2px;
             margin-bottom: 6px;
         }
 
         .result-main-time {
-            font-size: 3rem;
+            font-size: 3.5rem; /* Maior ainda */
             font-weight: 800;
             font-family: monospace;
             color: #6ef0a0;
-            text-shadow: 0 0 8px rgba(110, 240, 160, 0.4);
+            text-shadow: 0 0 10px rgba(110, 240, 160, 0.5);
             letter-spacing: 2px;
             line-height: 1.1;
+            animation: pulse-glow 2s infinite;
         }
 
         .next-day-indicator {
             display: block;
-            font-size: 0.8rem;
-            color: #ff6b00;
-            font-weight: 600;
-            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 500;
+            margin-top: 4px;
             letter-spacing: 0.5px;
         }
 
@@ -275,27 +275,25 @@
             letter-spacing: 0.2px;
         }
 
-        /* Estilo especial para o contador regressivo */
-        .countdown-value {
-            background: linear-gradient(135deg, #002b20, #003d2b);
-            color: #00ff9d;
-            font-family: monospace;
-            font-size: 1rem;
-            border: 1px solid rgba(0, 255, 157, 0.3);
-            animation: pulse-glow 2s infinite;
+        /* Estilo para o horário final (agora secundário) */
+        .final-time-value {
+            background: #1a1a1f;
+            color: #ffcf9a;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 107, 0, 0.2);
         }
 
         .countdown-finished {
-            background: #3d1a00;
-            color: #ffaa55;
-            border-color: #ff6b00;
+            color: #ff6b00 !important;
+            text-shadow: 0 0 10px rgba(255, 107, 0, 0.4) !important;
+            border-color: rgba(255, 107, 0, 0.3) !important;
             animation: none;
         }
 
         @keyframes pulse-glow {
-            0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.1); }
-            50% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.5); }
-            100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.1); }
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
         }
 
         .total-duration-value {
@@ -314,7 +312,6 @@
             padding-top: 10px;
         }
 
-        /* Classes para ocultar/mostrar */
         .config-panel {
             display: block;
         }
@@ -324,11 +321,11 @@
 
         @media (max-width: 560px) {
             .card-content { padding: 12px 14px 18px; }
-            .result-main-time { font-size: 2.5rem; letter-spacing: 1px; }
+            .result-main-time { font-size: 2.8rem; letter-spacing: 1px; }
             input { padding: 6px 6px; font-size: 0.85rem; }
             .btn-agora { width: 62px; font-size: 0.7rem; padding: 6px 6px; height: 34px; }
             .result-value { font-size: 0.78rem; padding: 2px 8px; }
-            .countdown-value { font-size: 0.9rem; }
+            .final-time-value { font-size: 1rem; }
             .result-label { font-size: 0.7rem; }
             .row { gap: 8px; }
             .section-title h3 { font-size: 0.7rem; padding: 2px 8px; }
@@ -417,18 +414,26 @@
 
         <!-- RESULTADOS -->
         <div class="result-box">
+            
+            <!-- 1. PRINCIPAL: TEMPO RESTANTE -->
             <div class="result-main">
-                <div class="result-main-label">🏁 TÉRMINO DO PROCESSO</div>
-                <div class="result-main-time" id="horarioFinal">--:--</div>
+                <div class="result-main-label">⏳ TEMPO RESTANTE</div>
+                <!-- O ID horarioFinal foi movido para baixo, usamos liveCountdown aqui em cima -->
+                <div id="liveCountdown" class="result-main-time">--:--:--</div>
+            </div>
+
+            <!-- 2. SECUNDÁRIO: TÉRMINO DO PROCESSO -->
+            <div class="result-row">
+                <span class="result-label">🏁 Término do processo:</span>
+                <span class="result-value final-time-value" id="horarioFinal">--:--</span>
+            </div>
+            <div class="result-row" style="margin-top: -6px; padding-top: 0; border-bottom: none;">
+                <span class="result-label"></span>
                 <span class="next-day-indicator" id="dayIndicator"></span>
             </div>
 
-            <div class="result-row">
-                <span class="result-label">⏳ Tempo restante:</span>
-                <span class="result-value countdown-value" id="liveCountdown">--:--:--</span>
-            </div>
-
-            <div class="result-row">
+            <!-- DETALHES -->
+            <div class="result-row" style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <span class="result-label">📊 Total de ciclos:</span>
                 <span class="result-value" id="displayCiclos">6</span>
             </div>
@@ -476,7 +481,6 @@
     const configPanel = document.getElementById('configPanel');
     const toggleBtn = document.querySelector('.btn-toggle-config');
 
-    // Variável global para o intervalo do contador
     let countdownInterval = null;
     let endDateCache = null;
 
@@ -491,7 +495,6 @@
             qtdCiclos: qtdCiclos.value,
             resfriamento: resfriamento.value,
             horaInicio: horaInicio.value,
-            // Salva estado do painel (oculto/mostrando)
             isHidden: configPanel.classList.contains('hidden')
         };
         localStorage.setItem('timerConfig', JSON.stringify(config));
@@ -501,7 +504,6 @@
         const saved = localStorage.getItem('timerConfig');
         if (saved) {
             const config = JSON.parse(saved);
-            // Restaura valores apenas se existirem
             if(config.preLigado !== undefined) preLigado.value = config.preLigado;
             if(config.preDesligado !== undefined) preDesligado.value = config.preDesligado;
             if(config.cicloLigado !== undefined) cicloLigado.value = config.cicloLigado;
@@ -510,7 +512,6 @@
             if(config.resfriamento !== undefined) resfriamento.value = config.resfriamento;
             if(config.horaInicio !== undefined) horaInicio.value = config.horaInicio;
             
-            // Restaura estado visual do painel
             if (config.isHidden) {
                 configPanel.classList.add('hidden');
                 toggleBtn.textContent = "Mostrar";
@@ -519,9 +520,9 @@
                 toggleBtn.textContent = "Ocultar";
             }
             
-            return true; // Indica que dados foram carregados
+            return true;
         }
-        return false; // Não havia dados
+        return false;
     }
 
     // --- LÓGICA DO TIMER ---
@@ -577,24 +578,17 @@
             return;
         }
         
-        // Lógica de data real
         const now = new Date();
-        // Importante: Criar a data baseada na data ATUAL, mas com a hora definida pelo usuário
-        // Se o usuário definir 23:00 e agora são 22:00, o início é hoje.
-        // Se o usuário definir 10:00 e agora são 14:00, o script assume que começou hoje (passado).
         const dataBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hora, minuto, 0);
         
         const diaInicial = dataBase.getDate();
         
-        // Calcula data final
         endDateCache = new Date(dataBase.getTime() + tempoTotal * 60000);
         
-        // Atualiza Horário Final
         const hFinal = String(endDateCache.getHours()).padStart(2, '0');
         const mFinal = String(endDateCache.getMinutes()).padStart(2, '0');
         horarioFinalSpan.innerText = `${hFinal}:${mFinal}`;
         
-        // Indicador de dia
         const diaFinal = endDateCache.getDate();
         const diffDays = Math.round((endDateCache - dataBase) / (1000 * 60 * 60 * 24));
         
@@ -605,7 +599,7 @@
         }
 
         iniciarContador();
-        salvarDados(); // Salva sempre que calcula
+        salvarDados();
     }
     
     function iniciarContador() {
@@ -620,11 +614,14 @@
             if (distance < 0) {
                 liveCountdownSpan.innerText = "FINALIZADO";
                 liveCountdownSpan.classList.add('countdown-finished');
+                // Muda a cor do label também
+                document.querySelector('.result-main-label').style.color = "#ff6b00";
                 clearInterval(countdownInterval);
                 return;
             }
             
             liveCountdownSpan.classList.remove('countdown-finished');
+            document.querySelector('.result-main-label').style.color = "#6ef0a0";
             
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -640,7 +637,7 @@
     function toggleConfigs() {
         const isHidden = configPanel.classList.toggle('hidden');
         toggleBtn.textContent = isHidden ? "Mostrar" : "Ocultar";
-        salvarDados(); // Salva preferência do painel
+        salvarDados();
     }
     
     function setarAgora() {
@@ -648,10 +645,9 @@
         const horas = String(agora.getHours()).padStart(2, '0');
         const minutos = String(agora.getMinutes()).padStart(2, '0');
         horaInicio.value = `${horas}:${minutos}`;
-        calcular(); // Calcula e Salva
+        calcular();
     }
     
-    // Event Listeners
     const allInputs = [
         preLigado, preDesligado, cicloLigado, cicloDesligado,
         qtdCiclos, resfriamento, horaInicio
@@ -664,19 +660,15 @@
         }
     });
     
-    // Inicialização
     window.onload = () => {
         const loaded = carregarDados();
-        // Se não carregou nada (primeiro uso), define o horário atual
         if (!loaded) {
             setarAgora();
         } else {
-            // Se carregou, apenas calcula com os dados recuperados
             calcular();
         }
     };
 
-    // Garante salvar ao sair ou mudar aba (evento pagehide é mais confiável em mobile)
     window.addEventListener('pagehide', salvarDados);
     
 </script>
