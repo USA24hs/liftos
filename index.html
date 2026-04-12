@@ -328,7 +328,7 @@
             </div>
             <div class="preset-text">
                 <span class="preset-label">Leve</span>
-                <span class="preset-meta">10x</span>
+                <span class="preset-meta">Ciclo: 1hs</span>
             </div>
         </button>
         
@@ -341,7 +341,7 @@
             </div>
             <div class="preset-text">
                 <span class="preset-label">Médio</span>
-                <span class="preset-meta">15x</span>
+                <span class="preset-meta">Ciclo: 2hs</span>
             </div>
         </button>
         
@@ -353,7 +353,7 @@
             </div>
             <div class="preset-text">
                 <span class="preset-label">Pesado</span>
-                <span class="preset-meta">20x</span>
+                <span class="preset-meta">Ciclo: 3hs</span>
             </div>
         </button>
     </div>
@@ -728,21 +728,21 @@
         if (tipo === 'leve') {
             preLigadoH.value = 0; preLigadoM.value = 10;
             preDesligadoH.value = 0; preDesligadoM.value = 1;
-            cicloLigadoH.value = 0; cicloLigadoM.value = 4;
-            cicloDesligadoH.value = 0; cicloDesligadoM.value = 2;
-            qtdCiclos.value = 10;
-            resfriamentoH.value = 0; resfriamentoM.value = 6;
-        } else if (tipo === 'medio') {
-            preLigadoH.value = 0; preLigadoM.value = 14;
-            preDesligadoH.value = 0; preDesligadoM.value = 1;
             cicloLigadoH.value = 0; cicloLigadoM.value = 6;
+            cicloDesligadoH.value = 0; cicloDesligadoM.value = 1;
+            qtdCiclos.value = 10;
+            resfriamentoH.value = 0; resfriamentoM.value = 10;
+        } else if (tipo === 'medio') {
+            preLigadoH.value = 0; preLigadoM.value = 12;
+            preDesligadoH.value = 0; preDesligadoM.value = 1;
+            cicloLigadoH.value = 0; cicloLigadoM.value = 8;
             cicloDesligadoH.value = 0; cicloDesligadoM.value = 1;
             qtdCiclos.value = 15;
             resfriamentoH.value = 0; resfriamentoM.value = 10;
         } else if (tipo === 'pesado') {
-            preLigadoH.value = 0; preLigadoM.value = 18;
-            preDesligadoH.value = 0; preDesligadoM.value = 2;
-            cicloLigadoH.value = 0; cicloLigadoM.value = 8;
+            preLigadoH.value = 0; preLigadoM.value = 15;
+            preDesligadoH.value = 0; preDesligadoM.value = 1;
+            cicloLigadoH.value = 0; cicloLigadoM.value = 9;
             cicloDesligadoH.value = 0; cicloDesligadoM.value = 1;
             qtdCiclos.value = 20;
             resfriamentoH.value = 0; resfriamentoM.value = 15;
