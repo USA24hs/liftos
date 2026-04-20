@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Marlift Empilhadeiras - OS Profissional v6.0</title>
+  <title>Marlift Empilhadeiras - OS Profissional v7.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -43,6 +43,8 @@
     .btn-info { background: var(--info); color: white; }
     .btn-yellow { background: #eab308; color: #1e293b; border: none; }
     .btn-yellow:hover:not(:disabled) { background: #ca8a04; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3); }
+    .btn-sync { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .btn-sync:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
     .signature-canvas { border: 2px dashed var(--border); border-radius: 8px; background: white; width: 100%; height: 140px; cursor: crosshair; touch-action: none; }
     .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.5s ease; }
@@ -92,6 +94,9 @@
     .modal-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 16px; color: var(--accent); }
     .equip-option { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
     .equip-option:hover { border-color: var(--accent); background: var(--card); transform: translateX(5px); }
+    .sync-status { position: fixed; bottom: 20px; right: 20px; background: var(--card); border-radius: 30px; padding: 8px 16px; font-size: 12px; border: 1px solid var(--border); z-index: 100; display: flex; align-items: center; gap: 8px; }
+    .sync-status.online { border-color: var(--success); color: var(--success); }
+    .sync-status.offline { border-color: var(--danger); color: var(--danger); }
     @media print { .no-print { display: none !important; } body { background: white; color: black; } }
     @media (max-width: 768px) { .step { font-size: 9px; padding: 8px 4px; } .timer-display { font-size: 1.8rem; } .btn { padding: 8px 12px; font-size: 12px; } .photo-item { width: 100px; height: 100px; } .stat-value { font-size: 1.2rem; } }
   </style>
@@ -102,7 +107,6 @@
   <p class="mt-4 text-[var(--accent)] font-display text-xl">Carregando Sistema...</p>
 </div>
 
-<!-- Modal para selecionar equipamento -->
 <div id="equipModal" class="modal">
   <div class="modal-content">
     <div class="modal-title"><i class="fas fa-forklift"></i> Selecione o Equipamento</div>
@@ -118,14 +122,15 @@
         <div class="w-12 h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
         </div>
-        <div><h1 class="font-display text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v6.0</p></div>
+        <div><h1 class="font-display text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v7.0</p></div>
       </div>
       <div class="flex flex-wrap gap-2">
         <button onclick="App.gerarPreviaPDF()" id="btnPreviaPDF" class="btn btn-primary text-sm" disabled><i class="fas fa-file-pdf"></i> Visualizar PDF</button>
         <button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> Enviar E-mail</button>
         <button onclick="App.sendWhatsAppMessage()" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button>
         <button onclick="App.novaOS()" class="btn btn-yellow text-sm"><i class="fas fa-plus"></i> Nova O.S</button>
-        <button id="btnRecargaPlanilha" onclick="GoogleSheets.recarregar()" class="btn btn-secondary text-sm"><i class="fas fa-sync-alt"></i> Carregar Planilha</button>
+        <button onclick="GoogleSheetsSync.fullSync()" class="btn btn-sync text-sm"><i class="fas fa-cloud-upload-alt"></i> Sincronizar</button>
+        <button onclick="GoogleSheetsSync.fetchFromSheet()" class="btn btn-secondary text-sm"><i class="fas fa-cloud-download-alt"></i> Baixar</button>
       </div>
     </div>
   </header>
@@ -143,7 +148,7 @@
       <button class="tab-button" data-tab="tab-clientes">Clientes</button>
       <button class="tab-button" data-tab="tab-historico">Histórico</button>
     </div>
-    <!-- Tab OS -->
+    
     <div id="tab-os" class="tab-content active">
       <div class="checklist-card p-5 mb-5">
         <div class="flex flex-wrap justify-between items-center gap-3 mb-4"><h2 class="font-display text-xl">Informações da O.S</h2><div><span class="status-badge" id="statusBadge">EM ABERTURA</span></div></div>
@@ -210,7 +215,9 @@
       </div>
       <div class="flex gap-3 justify-center mb-8 no-print"><button onclick="App.salvarOSManual()" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Progresso</button></div>
     </div>
+    
     <div id="tab-checklist" class="tab-content"><div class="checklist-card p-4 mb-5"><div class="flex justify-between items-center"><span class="font-semibold">Progresso do Checklist</span><span id="progressText" class="font-mono text-[var(--accent)] text-lg">0%</span></div><div class="progress-bar mt-2"><div id="progressFill" class="progress-fill" style="width:0%"></div></div></div><div id="checklistSections"></div></div>
+    
     <div id="tab-clientes" class="tab-content">
       <div class="stats-grid no-print" id="clientesStats">
         <div class="stat-card"><div class="stat-value" id="statTotalClientes">0</div><div class="stat-label">Total Clientes</div></div>
@@ -228,6 +235,7 @@
       </div>
       <div class="mt-5"><input type="text" id="cad_searchInput" placeholder="Buscar cliente..." class="form-input w-full md:w-64 mb-3"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-3 text-left">Nome</th><th class="p-3 text-left">Cidade</th><th class="p-3 text-left">Marcas</th><th class="p-3 text-left">Ações</th></tr></thead><tbody id="cad_tableBody"></tbody></table></div></div>
     </div>
+    
     <div id="tab-historico" class="tab-content">
       <div class="stats-grid no-print">
         <div class="stat-card"><div class="stat-value" id="statTotalOS">0</div><div class="stat-label">Total de OS</div></div>
@@ -259,10 +267,11 @@
     </div>
   </main>
   <div id="toastCenter" class="toast-center"><i class="fas fa-check-circle text-green-500 text-2xl"></i><span id="toastMessage">Operação realizada</span></div>
+  <div class="sync-status" id="syncStatus"><i class="fas fa-cloud-upload-alt"></i> <span id="syncStatusText">Pronto</span></div>
 </div>
 
 <script>
-// ==================== SISTEMA v6.0 COM LOCALSTORAGE E GOOGLE SHEETS ====================
+// ==================== SISTEMA v7.0 COM SINCRONIZAÇÃO BIDIRECIONAL ====================
 var Config = {
   marcas: ["TOYOTA","CLARK","BYD","PALETRANS","LINDE","HYSTER","YALE","CATERPILLAR","KOMATSU","MITSUBISHI","NISSAN","STILL","CROWN","JUNGHEINRICH","TCM","HYUNDAI","DOOSAN","HELI","HANGCHA","LONKING","OUTRA"],
   checklist: [ { id:'motor', title:'Motor e Componentes', items:[{id:'motor_oleo',label:'Nivel de oleo do motor'},{id:'motor_filtro_oleo',label:'Filtro de oleo'},{id:'motor_filtro_ar',label:'Filtro de ar'},{id:'motor_filtro_comb',label:'Filtro de combustivel'},{id:'motor_correias',label:'Correias'},{id:'motor_radiador',label:'Radiador'}] }, { id:'eletrico', title:'Sistema Eletrico', items:[{id:'eletr_bateria',label:'Bateria'},{id:'eletr_terminais',label:'Terminais'},{id:'eletr_alternador',label:'Alternador'},{id:'eletr_partida',label:'Motor de partida'},{id:'eletr_farois',label:'Farois'},{id:'eletr_buzina',label:'Buzina'}] }, { id:'hidraulico', title:'Sistema Hidraulico', items:[{id:'hidr_oleo',label:'Nivel oleo hidraulico'},{id:'hidr_bomba',label:'Bomba hidraulica'},{id:'hidr_cilindros',label:'Cilindros'},{id:'hidr_vazamentos',label:'Vazamentos'},{id:'hidr_mangueiras',label:'Mangueiras'}] }, { id:'transmissao', title:'Transmissao e Freios', items:[{id:'trans_oleo',label:'Oleo transmissao'},{id:'freio_servico',label:'Freio de servico'},{id:'freio_estac',label:'Freio de estacionamento'},{id:'freio_pastilhas',label:'Pastilhas/Lonas'}] }, { id:'direcao', title:'Direcao', items:[{id:'dir_volante',label:'Volante'},{id:'dir_caixa',label:'Caixa de direcao'},{id:'dir_hidraulica',label:'Direcao hidraulica'}] }, { id:'estrutura', title:'Estrutura e Garfos', items:[{id:'est_mastros',label:'Mastros'},{id:'est_correntes',label:'Correntes'},{id:'est_garfos',label:'Garfos'},{id:'est_roletes',label:'Roletes'}] }, { id:'seguranca', title:'Seguranca', items:[{id:'seg_cinto',label:'Cinto de seguranca'},{id:'seg_extintor',label:'Extintor'},{id:'seg_espelhos',label:'Espelhos'},{id:'seg_alarme',label:'Alarme de re'}] } ],
@@ -453,7 +462,6 @@ var Checklist = {
   updateProgress: function() { var checkboxes = document.querySelectorAll('input[data-check="true"]'); this.checked = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length; var pct = this.total > 0 ? Math.round((this.checked / this.total) * 100) : 0; var progText = $('progressText'); if (progText) progText.textContent = pct + '%'; var fill = $('progressFill'); if (fill) fill.style.width = pct + '%'; }
 };
 
-// Função CORRIGIDA para adicionar campo de equipamento
 function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
   marca = marca || '';
   modelo = modelo || '';
@@ -465,10 +473,9 @@ function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
   var div = document.createElement('div');
   div.className = 'equip-item';
   
-  // Criar select de marcas SEM duplicar OUTRA
   var options = '<option value="">Selecione</option>';
   Config.marcas.forEach(function(m) {
-    if (m !== 'OUTRA') { // Pula a opção OUTRA da lista padrão
+    if (m !== 'OUTRA') {
       options += '<option value="' + m + '"' + (marca === m ? ' selected' : '') + '>' + m + '</option>';
     }
   });
@@ -502,12 +509,6 @@ function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
       if (outraInput) outraInput.value = '';
     }
   });
-  
-  // Se já veio com OUTRA selecionado, ajusta
-  if (marca === 'OUTRA') {
-    var outraInput = div.querySelector('.outra-marca');
-    if (outraInput && marca !== 'OUTRA') outraInput.value = marca;
-  }
 }
 
 var Clientes = { 
@@ -515,7 +516,56 @@ var Clientes = {
   updateStats: function() { var totalClientes = State.clients.length; var totalMarcas = 0; State.clients.forEach(function(c) { totalMarcas += (c.equipamentos || []).length; }); var clientesComOS = new Set(); var totalOS = 0; var osAbertas = 0; var osAprovadas = 0; State.osHistory.forEach(function(os) { if (os.cliente) { clientesComOS.add(os.cliente); totalOS++; } if (os.status === 'abertura' || os.status === 'execucao' || os.status === 'finalizacao') osAbertas++; if (os.status === 'aprovada') osAprovadas++; }); $('statTotalClientes').innerText = totalClientes; $('statTotalMarcas').innerText = totalMarcas; $('statClientesComOS').innerText = clientesComOS.size; $('statTotalOSClientes').innerText = totalOS; $('statOSAbertasCliente').innerText = osAbertas; $('statOSAprovadasCliente').innerText = osAprovadas; },
   renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + (c.nome || '-') + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
   addEquipField: function(marca, modelo, serie, qtd, combustivel) { adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel); },
-  save: function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marcaSelect = item.querySelector('.equip-marca').value; var outraInput = item.querySelector('.outra-marca'); var marca = marcaSelect === 'OUTRA' ? (outraInput ? outraInput.value.toUpperCase() : '') : marcaSelect; if (marca) { equipamentos.push({ marca: marca, modelo: item.querySelector('.equip-modelo').value || '', serie: item.querySelector('.equip-serie').value || '', qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value || '' }); } }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); },
+  save: async function() { 
+    var nome = Utils.getVal('cad_nome').trim(); 
+    if (!nome) { showToast('Nome do cliente obrigatório', true); return; } 
+    var equipamentos = []; 
+    var container = $('equipamentosList'); 
+    if (container) { 
+      container.querySelectorAll('.equip-item').forEach(function(item) { 
+        var marcaSelect = item.querySelector('.equip-marca').value; 
+        var outraInput = item.querySelector('.outra-marca'); 
+        var marca = marcaSelect === 'OUTRA' ? (outraInput ? outraInput.value.toUpperCase() : '') : marcaSelect; 
+        if (marca) { 
+          equipamentos.push({ 
+            marca: marca, 
+            modelo: item.querySelector('.equip-modelo').value || '', 
+            serie: item.querySelector('.equip-serie').value || '', 
+            qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, 
+            combustivel: item.querySelector('.equip-combustivel').value || '' 
+          }); 
+        } 
+      }); 
+    } 
+    var cliente = { 
+      id: State.editingClientId || Date.now(), 
+      nome: nome, 
+      cnpj: Utils.getVal('cad_cnpj'), 
+      endereco: Utils.getVal('cad_endereco'), 
+      cidade: Utils.getVal('cad_cidade'), 
+      telefone: Utils.getVal('cad_telefone'), 
+      whatsapp: Utils.getVal('cad_whatsapp'), 
+      email: Utils.getVal('cad_email'), 
+      responsavel_nome: Utils.getVal('cad_responsavel_nome'), 
+      responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), 
+      equipamentos: equipamentos 
+    }; 
+    if (State.editingClientId) { 
+      var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); 
+      if (idx >= 0) State.clients[idx] = cliente; 
+      State.editingClientId = null; 
+      var cancelBtn = $('cad_btnCancelar'); 
+      if (cancelBtn) cancelBtn.style.display = 'none'; 
+    } else { 
+      State.clients.push(cliente); 
+    } 
+    Storage.saveClients(); 
+    this.renderTable(); 
+    this.clearForm(); 
+    this.updateStats(); 
+    showToast('Cliente salvo'); 
+    await GoogleSheetsSync.syncSingleCliente(cliente);
+  },
   select: function(id) { 
     var c = State.clients.find(function(c) { return c.id === id; });
     if (!c) return;
@@ -552,129 +602,141 @@ var Historico = {
   clear: function() { if (!confirm('Limpar TODO o historico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Historico limpo'); }
 };
 
-// ==================== INTEGRAÇÃO COM GOOGLE SHEETS (COM PROXY CORS) ====================
-const GoogleSheets = {
-  url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyIN-Q9gqrixOAJsg_rarhzngKE8aZz9JUH2kZ8fpCCISYCQbqm_1t-RRUmt4FVA6Y34S5XsPg9u4k/pub?output=csv',
+// ==================== SINCRONIZAÇÃO BIDIRECIONAL COM GOOGLE SHEETS ====================
+const GoogleSheetsSync = {
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbxbDRx57y4CnRW4e-3hW1eG3n3vX6HxJGV-oG3a59wul2Jx6ATr5g1XZaAiDRpUQI7U/exec',
   
-  async fetchClientes() {
+  async syncAllClientes() {
     try {
-      showToast('🔄 Carregando planilha...');
-      // Usando proxy CORS para funcionar no Chrome
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(this.url);
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('Erro HTTP: ' + response.status);
-      const csvText = await response.text();
-      const clientes = this.parseCSV(csvText);
-      this.mergeClientes(clientes);
-      showToast(`✅ ${clientes.length} clientes carregados da planilha!`);
-      return clientes;
-    } catch (error) {
-      console.error('Erro no Google Sheets:', error);
-      showToast('⚠️ Não foi possível carregar planilha. Verifique se está publicada.', true);
-      return [];
-    }
-  },
-  
-  parseCSV(csv) {
-    const linhas = csv.split(/\r?\n/);
-    if (linhas.length < 2) return [];
-    
-    const cabecalhos = linhas[0].split(',').map(h => h.trim().toLowerCase());
-    const clientes = [];
-    
-    for (let i = 1; i < linhas.length; i++) {
-      if (!linhas[i].trim()) continue;
-      
-      const valores = this.quebraCSV(linhas[i]);
-      const cliente = {};
-      
-      cabecalhos.forEach((cab, idx) => {
-        let valor = valores[idx] ? valores[idx].trim() : '';
-        if (valor.startsWith('"') && valor.endsWith('"')) {
-          valor = valor.slice(1, -1);
-        }
-        cliente[cab] = valor;
+      this.setStatus('Enviando clientes...');
+      await fetch(this.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'syncClientes',
+          clientes: State.clients
+        })
       });
+      this.setStatus('Clientes sincronizados!', true);
+      return true;
+    } catch (error) {
+      console.error('Erro ao sincronizar:', error);
+      this.setStatus('Erro na sincronização', false);
+      return false;
+    }
+  },
+  
+  async syncSingleCliente(cliente) {
+    try {
+      await fetch(this.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'syncSingleCliente',
+          cliente: cliente
+        })
+      });
+      return true;
+    } catch (error) {
+      console.error('Erro:', error);
+      return false;
+    }
+  },
+  
+  async syncAllOS() {
+    try {
+      this.setStatus('Enviando OS...');
+      await fetch(this.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'syncOS',
+          os: State.osHistory
+        })
+      });
+      this.setStatus('OS sincronizadas!', true);
+      return true;
+    } catch (error) {
+      console.error('Erro:', error);
+      this.setStatus('Erro na sincronização', false);
+      return false;
+    }
+  },
+  
+  async syncSingleOS(os) {
+    try {
+      await fetch(this.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'syncSingleOS',
+          os: os
+        })
+      });
+      return true;
+    } catch (error) {
+      console.error('Erro:', error);
+      return false;
+    }
+  },
+  
+  async fetchFromSheet() {
+    try {
+      this.setStatus('Baixando dados...');
+      const response = await fetch(this.webAppUrl);
+      const data = await response.json();
       
-      if (cliente.nome && cliente.nome.trim()) {
-        cliente.id = Date.now() + i;
-        // Se tiver campos de equipamento, cria um
-        if (cliente.marca && cliente.marca.trim()) {
-          cliente.equipamentos = [{
-            marca: cliente.marca,
-            modelo: cliente.modelo || '',
-            serie: cliente.serie || '',
-            qtd: cliente.qtd || 1,
-            combustivel: cliente.combustivel || ''
-          }];
-        } else {
-          cliente.equipamentos = [];
+      if (data.success) {
+        if (data.clientes && data.clientes.length) {
+          State.clients = data.clientes;
+          Storage.saveClients();
+          Clientes.renderTable();
+          Clientes.updateStats();
         }
-        clientes.push(cliente);
-      }
-    }
-    return clientes;
-  },
-  
-  quebraCSV(linha) {
-    const resultado = [];
-    let dentroAspas = false;
-    let valorAtual = '';
-    
-    for (let i = 0; i < linha.length; i++) {
-      const char = linha[i];
-      if (char === '"') {
-        dentroAspas = !dentroAspas;
-      } else if (char === ',' && !dentroAspas) {
-        resultado.push(valorAtual);
-        valorAtual = '';
-      } else {
-        valorAtual += char;
-      }
-    }
-    resultado.push(valorAtual);
-    return resultado;
-  },
-  
-  mergeClientes(clientesPlanilha) {
-    if (!clientesPlanilha.length) return;
-    
-    const clientesExistentesMap = new Map();
-    State.clients.forEach(c => clientesExistentesMap.set(c.nome, c));
-    
-    clientesPlanilha.forEach(clientePlanilha => {
-      if (clientesExistentesMap.has(clientePlanilha.nome)) {
-        const existente = clientesExistentesMap.get(clientePlanilha.nome);
-        existente.cnpj = clientePlanilha.cnpj || existente.cnpj;
-        existente.endereco = clientePlanilha.endereco || existente.endereco;
-        existente.cidade = clientePlanilha.cidade || existente.cidade;
-        existente.telefone = clientePlanilha.telefone || existente.telefone;
-        existente.whatsapp = clientePlanilha.whatsapp || existente.whatsapp;
-        existente.email = clientePlanilha.email || existente.email;
-        existente.responsavel_nome = clientePlanilha.responsavel_nome || existente.responsavel_nome;
-        existente.responsavel_telefone = clientePlanilha.responsavel_telefone || existente.responsavel_telefone;
-        if (clientePlanilha.equipamentos && clientePlanilha.equipamentos.length > 0) {
-          if (!existente.equipamentos) existente.equipamentos = [];
-          clientePlanilha.equipamentos.forEach(eqNovo => {
-            if (eqNovo.marca) {
-              const existe = existente.equipamentos.some(eq => eq.marca === eqNovo.marca && eq.modelo === eqNovo.modelo);
-              if (!existe) existente.equipamentos.push(eqNovo);
-            }
-          });
+        
+        if (data.os && data.os.length) {
+          State.osHistory = data.os;
+          Storage.saveOSHistory();
+          Historico.render();
+          Historico.updateStats();
         }
+        
+        this.setStatus(`${data.clientes?.length || 0} clientes, ${data.os?.length || 0} OS`, true);
+        showToast(`✅ Dados sincronizados da planilha!`);
+        return true;
       } else {
-        State.clients.push(clientePlanilha);
+        throw new Error(data.error);
       }
-    });
-    
-    Storage.saveClients();
-    Clientes.renderTable();
-    Clientes.updateStats();
-    Historico.updateStats();
+    } catch (error) {
+      console.error('Erro ao buscar dados:', error);
+      this.setStatus('Erro ao baixar', false);
+      showToast('❌ Erro ao carregar dados da planilha', true);
+      return false;
+    }
   },
   
-  async recarregar() {
-    await this.fetchClientes();
+  async fullSync() {
+    await this.syncAllClientes();
+    await this.syncAllOS();
+    showToast('✅ Sincronização completa realizada!');
+  },
+  
+  setStatus(message, success = null) {
+    const statusDiv = $('syncStatus');
+    const statusText = $('syncStatusText');
+    if (statusText) statusText.textContent = message;
+    if (statusDiv && success !== null) {
+      statusDiv.classList.remove('online', 'offline');
+      statusDiv.classList.add(success ? 'online' : 'offline');
+      setTimeout(() => {
+        statusDiv.classList.remove('online', 'offline');
+        if (statusText) statusText.textContent = 'Pronto';
+      }, 3000);
+    }
   }
 };
 
@@ -696,10 +758,9 @@ var App = {
       State.currentStatus = 'abertura'; 
       this.updateUI(); 
       
-      // Carregar planilha após 1 segundo (não bloqueia)
       setTimeout(function() {
-        GoogleSheets.fetchClientes();
-      }, 1000);
+        GoogleSheetsSync.fetchFromSheet();
+      }, 2000);
       
       var loading = $('loadingOverlay'); 
       if (loading) loading.style.display = 'none'; 
@@ -728,7 +789,7 @@ var App = {
         equipList.appendChild(div);
       });
     } else {
-      equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado. Clique em "Selecionar" para carregar apenas os dados do cliente.</div>';
+      equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado.</div>';
       var btnSimples = document.createElement('button');
       btnSimples.className = 'btn btn-primary w-full mt-2';
       btnSimples.innerHTML = 'Carregar apenas dados do cliente';
@@ -781,9 +842,48 @@ var App = {
   setupSearch: function() { var histSearch = $('historicoSearch'); if (histSearch) histSearch.addEventListener('input', function() { Historico.render(); }); var tipoFiltro = $('historicoFiltroTipo'); if (tipoFiltro) tipoFiltro.addEventListener('change', function() { Historico.render(); }); var statusFiltro = $('historicoFiltroStatus'); if (statusFiltro) statusFiltro.addEventListener('change', function() { Historico.render(); }); var searchInput = $('cad_searchInput'); if (searchInput) { searchInput.addEventListener('input', function(e) { var search = e.target.value.toLowerCase(); var filtered = State.clients.filter(function(c) { return (c.nome && c.nome.toLowerCase().indexOf(search) !== -1) || (c.cidade && c.cidade.toLowerCase().indexOf(search) !== -1); }); var original = State.clients; State.clients = filtered; Clientes.renderTable(); State.clients = original; }); } },
   updateUI: function() { var isAbertura = State.currentStatus === 'abertura'; var isExecucao = State.currentStatus === 'execucao'; var isFinalizacao = State.currentStatus === 'finalizacao'; var isFechada = State.currentStatus === 'fechada'; var isAprovada = State.currentStatus === 'aprovada'; var btnIniciar = $('btnIniciarExecucao'); if (btnIniciar) btnIniciar.disabled = !isAbertura; var btnFinalizar = $('btnFinalizar'); if (btnFinalizar) btnFinalizar.disabled = !isExecucao; var btnFechar = $('btnFecharOS'); if (btnFechar) btnFechar.disabled = !isFinalizacao; var btnAprovar = $('btnAprovar'); if (btnAprovar) btnAprovar.disabled = !isFechada; var btnPDF = $('btnPreviaPDF'); var btnEmail = $('btnEnviarEmail'); if (btnPDF) btnPDF.disabled = !isAprovada; if (btnEmail) btnEmail.disabled = !isAprovada; var editFields = ['descricaoServico','pecasAplicadas','pendencias','horasExtras','adicionalNoturno','modelo','numSerie','horimetro']; editFields.forEach(function(id) { var el = $(id); if (el) el.disabled = isFechada || isAprovada; }); var marcaSelect = $('marcaSelect'); if (marcaSelect) marcaSelect.disabled = isFechada || isAprovada; var badge = $('statusBadge'); if (badge) { badge.className = 'status-badge'; var statusConfig = { abertura: {text:'EM ABERTURA', class:'status-abertura'}, execucao: {text:'EM EXECUCAO', class:'status-execucao'}, finalizacao: {text:'FINALIZANDO', class:'status-finalizacao'}, fechada: {text:'FECHADA', class:'status-fechada'}, aprovada: {text:'APROVADA', class:'status-aprovada'} }; var cfg = statusConfig[State.currentStatus]; badge.textContent = cfg.text; badge.classList.add(cfg.class); } var steps = ['abertura','execucao','finalizacao','fechada','aprovada']; document.querySelectorAll('.step').forEach(function(step, idx) { step.classList.remove('active','completed','locked'); if (steps[idx] === State.currentStatus) step.classList.add('active'); else if (steps.indexOf(State.currentStatus) > idx) step.classList.add(steps[idx] === 'fechada' && State.currentStatus === 'aprovada' ? 'locked' : 'completed'); }); },
   coletarDados: function() { var data = {}; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') data[el.id] = el.value; }); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { data[cb.id] = cb.checked; }); document.querySelectorAll('#checklistSections select').forEach(function(sel) { data[sel.id] = sel.value; }); var marcaSelect = $('marcaSelect').value, marcaOutra = $('marcaOutra').value; data.marca = marcaSelect === 'OUTRA' ? marcaOutra.toUpperCase() : marcaSelect; return data; },
-  salvar: function() { Signature.save('tec'); Signature.save('cli'); var data = this.coletarDados(); data.status = State.currentStatus; data.fotosBase64 = State.fotosServico; data.fotoHorimetro = State.fotoHorimetro; data.fotosPendencias = State.fotosPendencias; data.assinaturaTecnico = Utils.getVal('assinaturaTecnicoData'); data.assinaturaCliente = Utils.getVal('assinaturaClienteData'); Horas.calcular(); data.horasTotais = Utils.getVal('horasTotais'); data.totalGeral = Utils.getVal('totalGeral'); if (!data.numeroOS) { data.numeroOS = Utils.generateOSNumber(); } try { var idx = State.osHistory.findIndex(function(os) { return os.numeroOS === data.numeroOS; }); if (idx >= 0) { State.osHistory[idx] = data; } else { State.osHistory.unshift(data); } Storage.saveOSHistory(); State.hasUnsavedChanges = false; Historico.updateStats(); Clientes.updateStats(); return true; } catch (e) { showToast('Erro ao salvar', true); return false; } },
-  salvarOSManual: function() { var ok = this.salvar(); if (ok) { showToast('OS salva com sucesso'); Historico.render(); } },
-  mudarStatus: function(novoStatus) { 
+  salvar: async function() { 
+    Signature.save('tec'); 
+    Signature.save('cli'); 
+    var data = this.coletarDados(); 
+    data.status = State.currentStatus; 
+    data.fotosBase64 = State.fotosServico; 
+    data.fotoHorimetro = State.fotoHorimetro; 
+    data.fotosPendencias = State.fotosPendencias; 
+    data.assinaturaTecnico = Utils.getVal('assinaturaTecnicoData'); 
+    data.assinaturaCliente = Utils.getVal('assinaturaClienteData'); 
+    Horas.calcular(); 
+    data.horasTotais = Utils.getVal('horasTotais'); 
+    data.totalGeral = Utils.getVal('totalGeral'); 
+    if (!data.numeroOS) { 
+      data.numeroOS = Utils.generateOSNumber(); 
+    } 
+    try { 
+      var idx = State.osHistory.findIndex(function(os) { return os.numeroOS === data.numeroOS; }); 
+      if (idx >= 0) { 
+        State.osHistory[idx] = data; 
+      } else { 
+        State.osHistory.unshift(data); 
+      } 
+      Storage.saveOSHistory(); 
+      State.hasUnsavedChanges = false; 
+      Historico.updateStats(); 
+      Clientes.updateStats(); 
+      await GoogleSheetsSync.syncSingleOS(data);
+      return true; 
+    } catch (e) { 
+      showToast('Erro ao salvar', true); 
+      return false; 
+    } 
+  },
+  salvarOSManual: async function() { 
+    var ok = await this.salvar(); 
+    if (ok) { 
+      showToast('OS salva com sucesso'); 
+      Historico.render(); 
+    } 
+  },
+  mudarStatus: async function(novoStatus) { 
     if (novoStatus === 'abertura') { if (!Utils.getVal('numeroOS')) { showToast('Clique em Nova OS primeiro.', true); return; } if (!Utils.getVal('cliente').trim()) { showToast('Cliente obrigatório para abrir a OS.', true); return; } } 
     if (novoStatus === 'execucao' && State.currentStatus !== 'abertura') { showToast('A OS precisa estar EM ABERTURA para iniciar execução.', true); return; } 
     if (novoStatus === 'finalizacao' && State.currentStatus !== 'execucao') { showToast('A OS precisa estar EM EXECUÇÃO para finalizar.', true); return; } 
@@ -791,8 +891,12 @@ var App = {
     if (novoStatus === 'aprovada') { if (State.currentStatus !== 'fechada') { showToast('A OS precisa estar FECHADA para aprovação.', true); return; } if (!Utils.getVal('assinaturaClienteData')) { showToast('O cliente deve assinar digitalmente.', true); return; } if (!Utils.getVal('recebedor').trim()) { showToast('Informe o nome do recebedor.', true); return; } } 
     State.currentStatus = novoStatus; 
     if (novoStatus === 'finalizacao' || novoStatus === 'fechada') Horas.calcular(); 
-    var ok = this.salvar(); 
-    if (ok) { this.updateUI(); Historico.render(); showToast('Status: ' + Utils.formatStatus(novoStatus)); } 
+    var ok = await this.salvar(); 
+    if (ok) { 
+      this.updateUI(); 
+      Historico.render(); 
+      showToast('Status: ' + Utils.formatStatus(novoStatus)); 
+    } 
   },
   iniciarExecucao: function() { if (State.currentStatus !== 'abertura') return; this.mudarStatus('execucao'); Timer.control('start'); showToast('Execução iniciada'); },
   finalizarServico: function() { if (State.currentStatus !== 'execucao') return; var horimetro = Utils.getVal('horimetro'); if (!horimetro) { showToast('Preencha o campo Horímetro antes de finalizar o serviço.', true); return; } Timer.control('stop'); Horas.calcular(); this.mudarStatus('finalizacao'); showToast('Serviço finalizado'); },
