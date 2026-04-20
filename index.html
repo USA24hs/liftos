@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Marlift Empilhadeiras - OS Profissional v6.0</title>
+  <title>Marlift Empilhadeiras - OS Profissional v6.1 (Cloud Sync)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -43,10 +43,6 @@
     .btn-info { background: var(--info); color: white; }
     .btn-yellow { background: #eab308; color: #1e293b; border: none; }
     .btn-yellow:hover:not(:disabled) { background: #ca8a04; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3); }
-    .btn-google { background: #0F9D58; color: white; }
-    .btn-google:hover:not(:disabled) { background: #0b7e48; transform: translateY(-2px); }
-    .btn-sync { background: #4285f4; color: white; }
-    .btn-sync:hover:not(:disabled) { background: #3367d6; transform: translateY(-2px); }
     .signature-canvas { border: 2px dashed var(--border); border-radius: 8px; background: white; width: 100%; height: 140px; cursor: crosshair; touch-action: none; }
     .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.5s ease; }
@@ -96,47 +92,42 @@
     .modal-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 16px; color: var(--accent); }
     .equip-option { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
     .equip-option:hover { border-color: var(--accent); background: var(--card); transform: translateX(5px); }
-    .sync-status { position: fixed; bottom: 20px; right: 20px; background: var(--card); border-radius: 20px; padding: 8px 16px; font-size: 12px; border: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; gap: 8px; }
-    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    .sync-dot.online { background: #10b981; }
-    .sync-dot.offline { background: #ef4444; }
+    .sync-status { position: fixed; top: 80px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 30px; padding: 8px 16px; font-size: 12px; z-index: 1000; display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .sync-status.online { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.1); }
+    .sync-status.offline { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    .sync-status.syncing { border-color: var(--accent); color: var(--accent); background: rgba(249, 115, 22, 0.1); }
+    .offline-banner { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); color: white; text-align: center; padding: 10px; font-size: 13px; font-weight: 500; position: fixed; top: 70px; left: 0; right: 0; z-index: 999; backdrop-filter: blur(8px); display: none; }
+    .offline-banner.show { display: block; }
+    .offline-banner i { margin-right: 8px; }
     @media print { .no-print { display: none !important; } body { background: white; color: black; } }
-    @media (max-width: 768px) { .step { font-size: 9px; padding: 8px 4px; } .timer-display { font-size: 1.8rem; } .btn { padding: 8px 12px; font-size: 12px; } .photo-item { width: 100px; height: 100px; } .stat-value { font-size: 1.2rem; } }
+    @media (max-width: 768px) { .step { font-size: 9px; padding: 8px 4px; } .timer-display { font-size: 1.8rem; } .btn { padding: 8px 12px; font-size: 12px; } .photo-item { width: 100px; height: 100px; } .stat-value { font-size: 1.2rem; } .sync-status { top: 70px; right: 10px; padding: 4px 10px; font-size: 10px; } }
   </style>
 </head>
 <body>
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <p class="mt-4 text-[var(--accent)] font-display text-xl">Carregando Sistema...</p>
-</div>
-
-<div id="syncStatus" class="sync-status no-print">
-  <div id="syncDot" class="sync-dot"></div>
-  <span id="syncText">Verificando conexão...</span>
-</div>
-
-<!-- Modal para selecionar equipamento -->
-<div id="equipModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title"><i class="fas fa-forklift"></i> Selecione o Equipamento</div>
-    <div id="equipList"></div>
-    <button onclick="App.fecharModalEquip()" class="btn btn-secondary w-full mt-3">Cancelar</button>
-  </div>
-</div>
-
+<div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div><p class="mt-4 text-[var(--accent)] font-display text-xl">Carregando Sistema...</p></div>
+<div id="offlineBanner" class="offline-banner"><i class="fas fa-wifi"></i> ⚠️ VOCÊ ESTÁ OFFLINE - Dados salvos LOCALMENTE. Sincronização automática ao reconectar.</div>
 <div class="min-h-screen" id="appContainer" style="display:none;">
+  <div class="sync-status online" id="syncStatus"><i class="fas fa-cloud-upload-alt" id="syncIcon"></i><span id="syncText">Sincronizado</span></div>
+  
+  <!-- MODAL PARA SELECIONAR EQUIPAMENTO -->
+  <div id="equipModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title"><i class="fas fa-forklift"></i> Selecione o Equipamento</div>
+      <div id="equipList"></div>
+      <button onclick="App.fecharModalEquip()" class="btn btn-secondary w-full mt-3">Cancelar</button>
+    </div>
+  </div>
+
   <header class="no-print border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
         </div>
-        <div><h1 class="font-display text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v6.0</p></div>
+        <div><h1 class="font-display text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v6.1 (Cloud Sync)</p></div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="GoogleSheets.syncToCloud()" id="btnSyncCloud" class="btn btn-sync text-sm"><i class="fas fa-cloud-upload-alt"></i> Sincronizar Agora</button>
-        <button onclick="GoogleSheets.loadFromCloud()" id="btnLoadCloud" class="btn btn-google text-sm"><i class="fas fa-cloud-download-alt"></i> Carregar da Nuvem</button>
+        <button onclick="Cloud.syncNow()" id="btnSync" class="btn btn-secondary text-sm"><i class="fas fa-sync-alt"></i> Sincronizar</button>
         <button onclick="App.gerarPreviaPDF()" id="btnPreviaPDF" class="btn btn-primary text-sm" disabled><i class="fas fa-file-pdf"></i> Visualizar PDF</button>
         <button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> Enviar E-mail</button>
         <button onclick="App.sendWhatsAppMessage()" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button>
@@ -145,699 +136,261 @@
     </div>
   </header>
   <main class="max-w-7xl mx-auto px-4 py-6">
-    <div class="step-indicator no-print mb-6">
-      <div class="step" data-step="abertura">Abertura</div>
-      <div class="step" data-step="execucao">Execução</div>
-      <div class="step" data-step="finalizacao">Finalizando</div>
-      <div class="step" data-step="fechada">Fechada</div>
-      <div class="step" data-step="aprovada">Aprovada</div>
-    </div>
+    <div class="step-indicator no-print mb-6"><div class="step" data-step="abertura">Abertura</div><div class="step" data-step="execucao">Execução</div><div class="step" data-step="finalizacao">Finalizando</div><div class="step" data-step="fechada">Fechada</div><div class="step" data-step="aprovada">Aprovada</div></div>
     <div class="flex border-b border-[var(--border)] mb-6 no-print overflow-x-auto">
       <button class="tab-button active" data-tab="tab-os">O.S</button>
       <button class="tab-button" data-tab="tab-checklist">Checklist</button>
       <button class="tab-button" data-tab="tab-clientes">Clientes</button>
       <button class="tab-button" data-tab="tab-historico">Histórico</button>
     </div>
-    <!-- Tab OS -->
     <div id="tab-os" class="tab-content active">
-      <div class="checklist-card p-5 mb-5">
-        <div class="flex flex-wrap justify-between items-center gap-3 mb-4"><h2 class="font-display text-xl">Informações da O.S</h2><div><span class="status-badge" id="statusBadge">EM ABERTURA</span></div></div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div><label class="block text-xs text-[var(--muted)] mb-1">N° O.S</label><input type="text" id="numeroOS" class="form-input font-mono font-bold text-lg" readonly placeholder="Clique em Nova OS"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Data</label><input type="date" id="dataOS" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Tipo de Chamado</label><select id="tipoChamado" class="form-input"><option value="normal">Normal</option><option value="emergencial">Emergencial</option><option value="garantia">Garantia</option><option value="preventiva">Preventiva</option><option value="corretiva">Corretiva</option><option value="avaliacao">Avaliação</option><option value="orcamento">Orçamento</option></select></div>
-        </div>
+      <div class="checklist-card p-5 mb-5"><div class="flex flex-wrap justify-between items-center gap-3 mb-4"><h2 class="font-display text-xl">Informações da O.S</h2><div><span class="status-badge" id="statusBadge">EM ABERTURA</span></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><div><label class="block text-xs text-[var(--muted)] mb-1">N° O.S</label><input type="text" id="numeroOS" class="form-input font-mono font-bold text-lg" readonly placeholder="Clique em Nova OS"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Data</label><input type="date" id="dataOS" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Tipo de Chamado</label><select id="tipoChamado" class="form-input"><option value="normal">Normal</option><option value="emergencial">Emergencial</option><option value="garantia">Garantia</option><option value="preventiva">Preventiva</option><option value="corretiva">Corretiva</option><option value="avaliacao">Avaliação</option><option value="orcamento">Orçamento</option></select></div></div>
         <div><label class="block text-xs text-[var(--muted)] mb-1">Relato do Cliente</label><textarea id="relatoCliente" class="form-input" rows="2" placeholder="Descreva o problema..."></textarea></div>
-        <div class="action-buttons no-print">
-          <button id="btnAbrirOS" class="btn btn-primary" onclick="App.mudarStatus('abertura')"><i class="fas fa-plus-circle"></i> Abrir O.S</button>
-          <button id="btnIniciarExecucao" class="btn btn-info" onclick="App.iniciarExecucao()"><i class="fas fa-play"></i> Iniciar Execucao</button>
-          <button id="btnFinalizar" class="btn btn-warning" onclick="App.finalizarServico()"><i class="fas fa-stop"></i> Finalizar Serviço</button>
-          <button id="btnFecharOS" class="btn btn-danger" onclick="App.fecharOS()"><i class="fas fa-lock"></i> Fechar O.S</button>
-          <button id="btnAprovar" class="btn btn-success" onclick="App.mudarStatus('aprovada')"><i class="fas fa-stamp"></i> Aprovar com Assinatura</button>
-        </div>
+        <div class="action-buttons no-print"><button id="btnAbrirOS" class="btn btn-primary" onclick="App.mudarStatus('abertura')"><i class="fas fa-plus-circle"></i> Abrir O.S</button><button id="btnIniciarExecucao" class="btn btn-info" onclick="App.iniciarExecucao()"><i class="fas fa-play"></i> Iniciar Execucao</button><button id="btnFinalizar" class="btn btn-warning" onclick="App.finalizarServico()"><i class="fas fa-stop"></i> Finalizar Serviço</button><button id="btnFecharOS" class="btn btn-danger" onclick="App.fecharOS()"><i class="fas fa-lock"></i> Fechar O.S</button><button id="btnAprovar" class="btn btn-success" onclick="App.mudarStatus('aprovada')"><i class="fas fa-stamp"></i> Aprovar com Assinatura</button></div>
       </div>
-      <div class="checklist-card p-5 mb-5">
-        <h2 class="font-display text-xl mb-3">Dados do Equipamento</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Marca</label><select id="marcaSelect" class="form-input"></select><div id="marcaOutraDiv" style="display:none;" class="mt-1"><input type="text" id="marcaOutra" class="form-input" placeholder="Digite a marca"></div><input type="hidden" id="marca"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Modelo</label><input type="text" id="modelo" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">N° Série</label><input type="text" id="numSerie" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Horímetro <span class="text-red-400">*</span></label><input type="text" id="horimetro" class="form-input" placeholder="Ex: 1250h" required></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Combustível</label><select id="combustivel" class="form-input"><option value="">Selecione</option><option value="eletrico">Elétrico</option><option value="diesel">Diesel</option><option value="gasolina">Gasolina</option><option value="glp">GLP</option></select></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">WhatsApp Cliente</label><input type="text" id="whatsappCliente" class="form-input" placeholder="(00) 00000-0000"></div>
-        </div>
-        <div class="grid md:grid-cols-3 gap-4 mt-4">
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Cliente</label><input type="text" id="cliente" class="form-input" required></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">CNPJ/CPF</label><input type="text" id="cnpj" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Cidade</label><input type="text" id="cidadeCliente" class="form-input"></div>
-        </div>
+      <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-3">Dados do Equipamento</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div><label class="block text-xs text-[var(--muted)] mb-1">Marca</label><select id="marcaSelect" class="form-input"></select><div id="marcaOutraDiv" style="display:none;" class="mt-1"><input type="text" id="marcaOutra" class="form-input" placeholder="Digite a marca"></div><input type="hidden" id="marca"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Modelo</label><input type="text" id="modelo" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">N° Série</label><input type="text" id="numSerie" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Horímetro <span class="text-red-400">*</span></label><input type="text" id="horimetro" class="form-input" placeholder="Ex: 1250h" required></div><div><label class="block text-xs text-[var(--muted)] mb-1">Combustível</label><select id="combustivel" class="form-input"><option value="">Selecione</option><option value="eletrico">Elétrico</option><option value="diesel">Diesel</option><option value="gasolina">Gasolina</option><option value="glp">GLP</option></select></div><div><label class="block text-xs text-[var(--muted)] mb-1">WhatsApp Cliente</label><input type="text" id="whatsappCliente" class="form-input" placeholder="(00) 00000-0000"></div></div>
+        <div class="grid md:grid-cols-3 gap-4 mt-4"><div><label class="block text-xs text-[var(--muted)] mb-1">Cliente</label><input type="text" id="cliente" class="form-input" required></div><div><label class="block text-xs text-[var(--muted)] mb-1">CNPJ/CPF</label><input type="text" id="cnpj" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Cidade</label><input type="text" id="cidadeCliente" class="form-input"></div></div>
         <div class="mt-4"><label class="block text-xs text-[var(--muted)] mb-1">Endereco</label><div class="flex gap-2"><input type="text" id="endereco" class="form-input flex-1"><button type="button" onclick="App.abrirMapa()" class="btn btn-secondary"><i class="fas fa-map-marker-alt"></i></button></div></div>
       </div>
-      <div class="checklist-card p-5 mb-5">
-        <h2 class="font-display text-xl mb-3">Serviço Realizado</h2>
-        <div><label class="block text-xs text-[var(--muted)] mb-1">Diagnóstico / Serviços executados</label><textarea id="descricaoServico" class="form-input min-h-24" placeholder="Descreva o diagnostico..."></textarea></div>
-        <div class="mt-3"><label class="block text-xs text-[var(--muted)] mb-1">Peças / Materiais Aplicados</label><textarea id="pecasAplicadas" class="form-input min-h-20" placeholder="Liste as pecas..."></textarea></div>
-        <div class="mt-3"><label class="block text-xs text-[var(--muted)] mb-1">Pendencias / Itens Críticos</label><textarea id="pendencias" class="form-input min-h-20" placeholder="Pendencias..."></textarea></div>
-      </div>
+      <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-3">Serviço Realizado</h2><div><label class="block text-xs text-[var(--muted)] mb-1">Diagnóstico / Serviços executados</label><textarea id="descricaoServico" class="form-input min-h-24" placeholder="Descreva o diagnostico..."></textarea></div><div class="mt-3"><label class="block text-xs text-[var(--muted)] mb-1">Peças / Materiais Aplicados</label><textarea id="pecasAplicadas" class="form-input min-h-20" placeholder="Liste as pecas..."></textarea></div><div class="mt-3"><label class="block text-xs text-[var(--muted)] mb-1">Pendencias / Itens Críticos</label><textarea id="pendencias" class="form-input min-h-20" placeholder="Pendencias..."></textarea></div></div>
       <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-2"><i class="fas fa-camera"></i> Foto do Horímetro</h2><input type="file" id="fotoHorimetroInput" accept="image/*" class="form-input"><div id="fotoHorimetroPreview" class="photo-preview"></div></div>
       <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-2">Fotos do Servico (max. 10)</h2><input type="file" id="fotosServico" multiple accept="image/*" class="form-input"><div id="fotosPreview" class="photo-preview"></div></div>
       <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-2"><i class="fas fa-exclamation-triangle"></i> Fotos das Pendências (max. 10)</h2><input type="file" id="fotosPendenciasInput" multiple accept="image/*" class="form-input"><div id="fotosPendenciasPreview" class="photo-preview"></div></div>
-      <div class="checklist-card p-5 mb-5">
-        <h2 class="font-display text-xl mb-3">Assinaturas Digitais</h2>
-        <div class="grid md:grid-cols-2 gap-6">
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Técnico</label><canvas id="sigTecnicoCanvas" class="signature-canvas" width="400" height="140"></canvas><div class="flex gap-2 mt-2"><button type="button" onclick="Signature.clear('tec')" class="btn btn-secondary text-xs">Limpar</button><button type="button" onclick="Signature.save('tec')" class="btn btn-primary text-xs">Salvar</button></div><input type="hidden" id="assinaturaTecnicoData"><input type="text" id="tecnico" placeholder="Marlift Empilhadeiras" class="form-input mt-2"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Cliente / Recebedor</label><canvas id="sigClienteCanvas" class="signature-canvas" width="400" height="140"></canvas><div class="flex gap-2 mt-2"><button type="button" onclick="Signature.clear('cli')" class="btn btn-secondary text-xs">Limpar</button><button type="button" onclick="Signature.save('cli')" class="btn btn-primary text-xs">Salvar</button></div><input type="hidden" id="assinaturaClienteData"><input type="text" id="recebedor" placeholder="Nome do recebedor" class="form-input mt-2"></div>
-        </div>
-      </div>
-      <div class="checklist-card p-5 mb-5">
-        <h2 class="font-display text-xl mb-3">Controle de Horas</h2>
-        <div class="text-center mb-4"><div class="timer-display" id="timerDisplay">00:00:00</div><div class="flex gap-2 justify-center mt-3"><button type="button" onclick="Timer.control('start')" class="btn btn-success text-sm">Iniciar</button><button type="button" onclick="Timer.control('pause')" class="btn btn-warning text-sm">Pausar</button><button type="button" onclick="Timer.control('stop')" class="btn btn-danger text-sm">Parar</button></div></div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Início</label><input type="time" id="horaInicio" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Saída Almoço</label><input type="time" id="horaAlmocoSaida" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Retorno Almoço</label><input type="time" id="horaAlmocoRetorno" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Termino</label><input type="time" id="horaTermino" class="form-input"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Horas Cobradas</label><input type="text" id="horasTotais" class="form-input font-mono font-bold" readonly></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Horas Extras</label><input type="text" id="horasExtras" class="form-input" placeholder="00:00"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Adicional Noturno</label><input type="text" id="adicionalNoturno" class="form-input" placeholder="00:00"></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Total Geral</label><input type="text" id="totalGeral" class="form-input font-mono font-bold text-[var(--success)]" readonly></div>
-        </div>
-      </div>
+      <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-3">Assinaturas Digitais</h2><div class="grid md:grid-cols-2 gap-6"><div><label class="block text-xs text-[var(--muted)] mb-1">Técnico</label><canvas id="sigTecnicoCanvas" class="signature-canvas" width="400" height="140"></canvas><div class="flex gap-2 mt-2"><button type="button" onclick="Signature.clear('tec')" class="btn btn-secondary text-xs">Limpar</button><button type="button" onclick="Signature.save('tec')" class="btn btn-primary text-xs">Salvar</button></div><input type="hidden" id="assinaturaTecnicoData"><input type="text" id="tecnico" placeholder="Marlift Empilhadeiras" class="form-input mt-2"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Cliente / Recebedor</label><canvas id="sigClienteCanvas" class="signature-canvas" width="400" height="140"></canvas><div class="flex gap-2 mt-2"><button type="button" onclick="Signature.clear('cli')" class="btn btn-secondary text-xs">Limpar</button><button type="button" onclick="Signature.save('cli')" class="btn btn-primary text-xs">Salvar</button></div><input type="hidden" id="assinaturaClienteData"><input type="text" id="recebedor" placeholder="Nome do recebedor" class="form-input mt-2"></div></div></div>
+      <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-3">Controle de Horas</h2><div class="text-center mb-4"><div class="timer-display" id="timerDisplay">00:00:00</div><div class="flex gap-2 justify-center mt-3"><button type="button" onclick="Timer.control('start')" class="btn btn-success text-sm">Iniciar</button><button type="button" onclick="Timer.control('pause')" class="btn btn-warning text-sm">Pausar</button><button type="button" onclick="Timer.control('stop')" class="btn btn-danger text-sm">Parar</button></div></div><div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><label class="block text-xs text-[var(--muted)] mb-1">Início</label><input type="time" id="horaInicio" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Saída Almoço</label><input type="time" id="horaAlmocoSaida" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Retorno Almoço</label><input type="time" id="horaAlmocoRetorno" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Termino</label><input type="time" id="horaTermino" class="form-input"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Horas Cobradas</label><input type="text" id="horasTotais" class="form-input font-mono font-bold" readonly></div><div><label class="block text-xs text-[var(--muted)] mb-1">Horas Extras</label><input type="text" id="horasExtras" class="form-input" placeholder="00:00"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Adicional Noturno</label><input type="text" id="adicionalNoturno" class="form-input" placeholder="00:00"></div><div><label class="block text-xs text-[var(--muted)] mb-1">Total Geral</label><input type="text" id="totalGeral" class="form-input font-mono font-bold text-[var(--success)]" readonly></div></div></div>
       <div class="flex gap-3 justify-center mb-8 no-print"><button onclick="App.salvarOSManual()" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Progresso</button></div>
     </div>
     <div id="tab-checklist" class="tab-content"><div class="checklist-card p-4 mb-5"><div class="flex justify-between items-center"><span class="font-semibold">Progresso do Checklist</span><span id="progressText" class="font-mono text-[var(--accent)] text-lg">0%</span></div><div class="progress-bar mt-2"><div id="progressFill" class="progress-fill" style="width:0%"></div></div></div><div id="checklistSections"></div></div>
-    <div id="tab-clientes" class="tab-content">
-      <div class="stats-grid no-print" id="clientesStats">
-        <div class="stat-card"><div class="stat-value" id="statTotalClientes">0</div><div class="stat-label">Total Clientes</div></div>
-        <div class="stat-card"><div class="stat-value" id="statTotalMarcas">0</div><div class="stat-label">Total Marcas</div></div>
-        <div class="stat-card"><div class="stat-value" id="statClientesComOS">0</div><div class="stat-label">Clientes c/ OS</div></div>
-        <div class="stat-card"><div class="stat-value" id="statTotalOSClientes">0</div><div class="stat-label">Total OS</div></div>
-        <div class="stat-card"><div class="stat-value" id="statOSAbertasCliente">0</div><div class="stat-label">OS em Aberto</div></div>
-        <div class="stat-card"><div class="stat-value" id="statOSAprovadasCliente">0</div><div class="stat-label">OS Aprovadas</div></div>
-      </div>
-      <div class="checklist-card p-5 mb-5">
-        <h2 class="font-display text-xl mb-3">Cadastro de Cliente</h2>
-        <div class="grid md:grid-cols-2 gap-3"><input type="text" id="cad_nome" placeholder="Nome*" class="form-input"><input type="text" id="cad_cnpj" placeholder="CNPJ" class="form-input"><input type="text" id="cad_endereco" placeholder="Endereço" class="form-input"><input type="text" id="cad_cidade" placeholder="Cidade" class="form-input"><input type="text" id="cad_telefone" placeholder="Telefone" class="form-input"><input type="text" id="cad_whatsapp" placeholder="WhatsApp" class="form-input"><input type="email" id="cad_email" placeholder="E-mail" class="form-input"><input type="text" id="cad_responsavel_nome" placeholder="Responsável (Nome)" class="form-input"><input type="text" id="cad_responsavel_telefone" placeholder="Telefone do Responsável" class="form-input"></div>
-        <div class="mt-4"><label class="font-semibold text-sm">Equipamentos do Cliente</label><div id="equipamentosList"></div><button type="button" onclick="Clientes.addEquipField()" class="btn btn-secondary text-sm mt-2"><i class="fas fa-plus"></i> Adicionar Equipamento</button></div>
-        <div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Clientes.save()"><i class="fas fa-save"></i> Salvar Cliente</button><button id="cad_btnCancelar" class="btn btn-secondary" style="display:none;" onclick="Clientes.cancelEdit()">Cancelar</button><button class="btn btn-secondary" onclick="Clientes.exportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button><button class="btn btn-secondary" onclick="Clientes.importCSV()"><i class="fas fa-upload"></i> Importar CSV</button></div>
-      </div>
+    <div id="tab-clientes" class="tab-content"><div class="stats-grid no-print" id="clientesStats"><div class="stat-card"><div class="stat-value" id="statTotalClientes">0</div><div class="stat-label">Total Clientes</div></div><div class="stat-card"><div class="stat-value" id="statTotalMarcas">0</div><div class="stat-label">Total Marcas</div></div><div class="stat-card"><div class="stat-value" id="statClientesComOS">0</div><div class="stat-label">Clientes c/ OS</div></div><div class="stat-card"><div class="stat-value" id="statTotalOSClientes">0</div><div class="stat-label">Total OS</div></div><div class="stat-card"><div class="stat-value" id="statOSAbertasCliente">0</div><div class="stat-label">OS em Aberto</div></div><div class="stat-card"><div class="stat-value" id="statOSAprovadasCliente">0</div><div class="stat-label">OS Aprovadas</div></div></div>
+      <div class="checklist-card p-5 mb-5"><h2 class="font-display text-xl mb-3">Cadastro de Cliente</h2><div class="grid md:grid-cols-2 gap-3"><input type="text" id="cad_nome" placeholder="Nome*" class="form-input"><input type="text" id="cad_cnpj" placeholder="CNPJ" class="form-input"><input type="text" id="cad_endereco" placeholder="Endereço" class="form-input"><input type="text" id="cad_cidade" placeholder="Cidade" class="form-input"><input type="text" id="cad_telefone" placeholder="Telefone" class="form-input"><input type="text" id="cad_whatsapp" placeholder="WhatsApp" class="form-input"><input type="email" id="cad_email" placeholder="E-mail" class="form-input"><input type="text" id="cad_responsavel_nome" placeholder="Responsável (Nome)" class="form-input"><input type="text" id="cad_responsavel_telefone" placeholder="Telefone do Responsável" class="form-input"></div><div class="mt-4"><label class="font-semibold text-sm">Equipamentos do Cliente</label><div id="equipamentosList"></div><button type="button" onclick="Clientes.addEquipField()" class="btn btn-secondary text-sm mt-2"><i class="fas fa-plus"></i> Adicionar Equipamento</button></div><div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Clientes.save()"><i class="fas fa-save"></i> Salvar Cliente</button><button id="cad_btnCancelar" class="btn btn-secondary" style="display:none;" onclick="Clientes.cancelEdit()">Cancelar</button><button class="btn btn-secondary" onclick="Clientes.exportCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button><button class="btn btn-secondary" onclick="Clientes.importCSV()"><i class="fas fa-upload"></i> Importar CSV</button></div></div>
       <div class="mt-5"><input type="text" id="cad_searchInput" placeholder="Buscar cliente..." class="form-input w-full md:w-64 mb-3"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-3 text-left">Nome</th><th class="p-3 text-left">Cidade</th><th class="p-3 text-left">Marcas</th><th class="p-3 text-left">Ações</th></tr></thead><tbody id="cad_tableBody"></tbody></table></div></div>
     </div>
-    <div id="tab-historico" class="tab-content">
-      <div class="stats-grid no-print">
-        <div class="stat-card"><div class="stat-value" id="statTotalOS">0</div><div class="stat-label">Total de OS</div></div>
-        <div class="stat-card"><div class="stat-value text-[#60a5fa]" id="statStatusAbertura">0</div><div class="stat-label">Em Abertura</div></div>
-        <div class="stat-card"><div class="stat-value text-[#fbbf24]" id="statStatusExecucao">0</div><div class="stat-label">Em Execução</div></div>
-        <div class="stat-card"><div class="stat-value text-[#34d399]" id="statStatusFinalizacao">0</div><div class="stat-label">Finalizando</div></div>
-        <div class="stat-card"><div class="stat-value text-[#a78bfa]" id="statStatusFechada">0</div><div class="stat-label">Fechadas</div></div>
-        <div class="stat-card"><div class="stat-value text-[#4ade80]" id="statStatusAprovada">0</div><div class="stat-label">Aprovadas</div></div>
-        <div class="stat-card"><div class="stat-value text-[#f97316]" id="statTipoEmergencial">0</div><div class="stat-label">Emergenciais</div></div>
-        <div class="stat-card"><div class="stat-value text-[#10b981]" id="statTipoPreventiva">0</div><div class="stat-label">Preventivas</div></div>
-        <div class="stat-card"><div class="stat-value text-[#ef4444]" id="statTipoCorretiva">0</div><div class="stat-label">Corretivas</div></div>
-        <div class="stat-card"><div class="stat-value text-[#8b5cf6]" id="statTipoGarantia">0</div><div class="stat-label">Garantia</div></div>
-        <div class="stat-card"><div class="stat-value text-[#06b6d4]" id="statTipoNormal">0</div><div class="stat-label">Normal</div></div>
-        <div class="stat-card"><div class="stat-value text-[#ec4899]" id="statTipoAvaliacao">0</div><div class="stat-label">Avaliações</div></div>
-        <div class="stat-card"><div class="stat-value text-[#f59e0b]" id="statTipoOrcamento">0</div><div class="stat-label">Orçamentos</div></div>
-        <div class="stat-card"><div class="stat-value" id="statEsteMes">0</div><div class="stat-label">OS este Mês</div></div>
-      </div>
-      <div class="checklist-card p-5">
-        <h2 class="font-display text-xl mb-3">Histórico de O.S</h2>
-        <div class="flex flex-wrap gap-3 mb-4"><input type="text" id="historicoSearch" placeholder="Buscar..." class="form-input w-64"><select id="historicoFiltroTipo" class="form-input w-40"><option value="">Todos os Tipos</option><option value="emergencial">Emergencial</option><option value="preventiva">Preventiva</option><option value="corretiva">Corretiva</option><option value="garantia">Garantia</option><option value="normal">Normal</option><option value="avaliacao">Avaliação</option><option value="orcamento">Orçamento</option></select><select id="historicoFiltroStatus" class="form-input w-36"><option value="">Todos Status</option><option value="abertura">Abertura</option><option value="execucao">Execução</option><option value="finalizacao">Finalizando</option><option value="fechada">Fechada</option><option value="aprovada">Aprovada</option></select><button onclick="Historico.exportCSV()" class="btn btn-secondary text-sm"><i class="fas fa-file-csv"></i> Exportar CSV</button><button onclick="Historico.importCSV()" class="btn btn-secondary text-sm"><i class="fas fa-upload"></i> Restaurar CSV</button><button onclick="Historico.clear()" class="btn btn-secondary text-sm text-red-400"><i class="fas fa-trash"></i> Limpar</button></div>
-        <div class="overflow-x-auto">
-          <table class="table-os">
-            <thead><tr><th class="w-28">O.S</th><th class="w-28">Data</th><th>Cliente</th><th class="w-28">Status</th><th class="w-20">Horas</th><th class="w-28">Ações</th></tr></thead>
-            <tbody id="historicoTableBody"></tbody>
-          </table>
-        </div>
-        <div id="historicoEmpty" class="text-center py-8 text-[var(--muted)] hidden">Nenhuma O.S encontrada</div>
-      </div>
+    <div id="tab-historico" class="tab-content"><div class="stats-grid no-print"><div class="stat-card"><div class="stat-value" id="statTotalOS">0</div><div class="stat-label">Total de OS</div></div><div class="stat-card"><div class="stat-value text-[#60a5fa]" id="statStatusAbertura">0</div><div class="stat-label">Em Abertura</div></div><div class="stat-card"><div class="stat-value text-[#fbbf24]" id="statStatusExecucao">0</div><div class="stat-label">Em Execução</div></div><div class="stat-card"><div class="stat-value text-[#34d399]" id="statStatusFinalizacao">0</div><div class="stat-label">Finalizando</div></div><div class="stat-card"><div class="stat-value text-[#a78bfa]" id="statStatusFechada">0</div><div class="stat-label">Fechadas</div></div><div class="stat-card"><div class="stat-value text-[#4ade80]" id="statStatusAprovada">0</div><div class="stat-label">Aprovadas</div></div><div class="stat-card"><div class="stat-value text-[#f97316]" id="statTipoEmergencial">0</div><div class="stat-label">Emergenciais</div></div><div class="stat-card"><div class="stat-value text-[#10b981]" id="statTipoPreventiva">0</div><div class="stat-label">Preventivas</div></div><div class="stat-card"><div class="stat-value text-[#ef4444]" id="statTipoCorretiva">0</div><div class="stat-label">Corretivas</div></div><div class="stat-card"><div class="stat-value text-[#8b5cf6]" id="statTipoGarantia">0</div><div class="stat-label">Garantia</div></div><div class="stat-card"><div class="stat-value text-[#06b6d4]" id="statTipoNormal">0</div><div class="stat-label">Normal</div></div><div class="stat-card"><div class="stat-value text-[#ec4899]" id="statTipoAvaliacao">0</div><div class="stat-label">Avaliações</div></div><div class="stat-card"><div class="stat-value text-[#f59e0b]" id="statTipoOrcamento">0</div><div class="stat-label">Orçamentos</div></div><div class="stat-card"><div class="stat-value" id="statEsteMes">0</div><div class="stat-label">OS este Mês</div></div></div>
+      <div class="checklist-card p-5"><h2 class="font-display text-xl mb-3">Histórico de O.S</h2><div class="flex flex-wrap gap-3 mb-4"><input type="text" id="historicoSearch" placeholder="Buscar..." class="form-input w-64"><select id="historicoFiltroTipo" class="form-input w-40"><option value="">Todos os Tipos</option><option value="emergencial">Emergencial</option><option value="preventiva">Preventiva</option><option value="corretiva">Corretiva</option><option value="garantia">Garantia</option><option value="normal">Normal</option><option value="avaliacao">Avaliação</option><option value="orcamento">Orçamento</option></select><select id="historicoFiltroStatus" class="form-input w-36"><option value="">Todos Status</option><option value="abertura">Abertura</option><option value="execucao">Execução</option><option value="finalizacao">Finalizando</option><option value="fechada">Fechada</option><option value="aprovada">Aprovada</option></select><button onclick="Historico.exportCSV()" class="btn btn-secondary text-sm"><i class="fas fa-file-csv"></i> Exportar CSV</button><button onclick="Historico.importCSV()" class="btn btn-secondary text-sm"><i class="fas fa-upload"></i> Restaurar CSV</button><button onclick="Historico.clear()" class="btn btn-secondary text-sm text-red-400"><i class="fas fa-trash"></i> Limpar</button></div><div class="overflow-x-auto"><table class="table-os"><thead><tr><th class="w-28">O.S</th><th class="w-28">Data</th><th>Cliente</th><th class="w-28">Status</th><th class="w-20">Horas</th><th class="w-28">Ações</th></tr></thead><tbody id="historicoTableBody"></tbody></table></div><div id="historicoEmpty" class="text-center py-8 text-[var(--muted)] hidden">Nenhuma O.S encontrada</div></div>
     </div>
   </main>
   <div id="toastCenter" class="toast-center"><i class="fas fa-check-circle text-green-500 text-2xl"></i><span id="toastMessage">Operação realizada</span></div>
 </div>
 
 <script>
-// ==================== SISTEMA v6.0 COM SINCRONIZAÇÃO ONLINE ====================
+// ==================== CONFIGURAÇÃO DO GOOGLE SHEETS ====================
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxaruTuaeEexgJGH_gqVKxEFp1qaID_XcKWMJwXS6frkyupwtl_aah3halvhZIF9m7Bjw/exec';
+
+// ==================== CLIENTE CLOUD ====================
+var Cloud = {
+  isOnline: true,
+  updateStatus: function(online, syncing) {
+    this.isOnline = online;
+    var statusDiv = document.getElementById('syncStatus'), statusText = document.getElementById('syncText'), syncIcon = document.getElementById('syncIcon'), offlineBanner = document.getElementById('offlineBanner');
+    if (statusDiv && statusText) {
+      if (syncing) { statusDiv.className = 'sync-status syncing'; statusText.textContent = 'Sincronizando...'; syncIcon.className = 'fas fa-spinner fa-pulse'; }
+      else if (online) { statusDiv.className = 'sync-status online'; statusText.textContent = 'Online ✓'; syncIcon.className = 'fas fa-cloud-upload-alt'; }
+      else { statusDiv.className = 'sync-status offline'; statusText.textContent = 'Offline 📴'; syncIcon.className = 'fas fa-database'; }
+    }
+    if (offlineBanner) { if (!online && !syncing) offlineBanner.classList.add('show'); else offlineBanner.classList.remove('show'); }
+  },
+  syncNow: async function() { this.updateStatus(this.isOnline, true); showToast('Sincronizando...'); await this.syncAll(); this.updateStatus(this.isOnline, false); showToast('Sincronização concluída!'); },
+  syncAll: async function() { await this.loadClientesFromCloud(); await this.loadOSFromCloud(); },
+  loadClientesFromCloud: async function() {
+    try {
+      const response = await fetch(`${GOOGLE_SHEETS_URL}?action=getAll&sheet=Clientes&t=${Date.now()}`);
+      const result = await response.json();
+      if (result.success && result.data) { State.clients = result.data; Clientes.renderTable(); Clientes.updateStats(); this.updateStatus(true, false); return true; }
+    } catch (error) { console.error('Erro cloud:', error); this.updateStatus(false, false); }
+    return false;
+  },
+  loadOSFromCloud: async function() {
+    try {
+      const response = await fetch(`${GOOGLE_SHEETS_URL}?action=getAll&sheet=OS&t=${Date.now()}`);
+      const result = await response.json();
+      if (result.success && result.data) { State.osHistory = result.data; Historico.render(); Historico.updateStats(); Clientes.updateStats(); this.updateStatus(true, false); return true; }
+    } catch (error) { console.error('Erro cloud OS:', error); this.updateStatus(false, false); }
+    return false;
+  },
+  saveClienteToCloud: async function(cliente) {
+    try {
+      const formData = new FormData(); formData.append('action', 'save'); formData.append('sheet', 'Clientes'); formData.append('data', JSON.stringify(cliente));
+      const response = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
+      const result = await response.json();
+      if (result.success) { await this.loadClientesFromCloud(); return true; }
+    } catch (error) { this.updateStatus(false, false); showToast('⚠️ Offline - salvo localmente', true); }
+    return false;
+  },
+  saveOSToCloud: async function(os) {
+    try {
+      const formData = new FormData(); formData.append('action', 'save'); formData.append('sheet', 'OS'); formData.append('data', JSON.stringify(os));
+      const response = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
+      const result = await response.json();
+      if (result.success) { await this.loadOSFromCloud(); return true; }
+    } catch (error) { this.updateStatus(false, false); showToast('⚠️ Offline - OS salva localmente', true); }
+    return false;
+  },
+  deleteFromCloud: async function(sheet, key, value) {
+    try {
+      const response = await fetch(`${GOOGLE_SHEETS_URL}?action=delete&sheet=${sheet}&key=${key}&value=${value}`);
+      const result = await response.json();
+      if (result.success) { if (sheet === 'Clientes') await this.loadClientesFromCloud(); else await this.loadOSFromCloud(); return true; }
+    } catch (error) { console.error('Erro delete:', error); }
+    return false;
+  },
+  monitorConnection: function() {
+    window.addEventListener('online', async () => { showToast('🟢 Online! Sincronizando...'); this.updateStatus(true, true); await this.syncAll(); this.updateStatus(true, false); showToast('✅ Sincronizado!'); });
+    window.addEventListener('offline', () => { this.updateStatus(false, false); showToast('🔴 Offline', true); });
+  }
+};
+
+// ==================== CONFIGURAÇÕES ====================
 var Config = {
   marcas: ["TOYOTA","CLARK","BYD","PALETRANS","LINDE","HYSTER","YALE","CATERPILLAR","KOMATSU","MITSUBISHI","NISSAN","STILL","CROWN","JUNGHEINRICH","TCM","HYUNDAI","DOOSAN","HELI","HANGCHA","LONKING","OUTRA"],
   checklist: [ { id:'motor', title:'Motor e Componentes', items:[{id:'motor_oleo',label:'Nivel de oleo do motor'},{id:'motor_filtro_oleo',label:'Filtro de oleo'},{id:'motor_filtro_ar',label:'Filtro de ar'},{id:'motor_filtro_comb',label:'Filtro de combustivel'},{id:'motor_correias',label:'Correias'},{id:'motor_radiador',label:'Radiador'}] }, { id:'eletrico', title:'Sistema Eletrico', items:[{id:'eletr_bateria',label:'Bateria'},{id:'eletr_terminais',label:'Terminais'},{id:'eletr_alternador',label:'Alternador'},{id:'eletr_partida',label:'Motor de partida'},{id:'eletr_farois',label:'Farois'},{id:'eletr_buzina',label:'Buzina'}] }, { id:'hidraulico', title:'Sistema Hidraulico', items:[{id:'hidr_oleo',label:'Nivel oleo hidraulico'},{id:'hidr_bomba',label:'Bomba hidraulica'},{id:'hidr_cilindros',label:'Cilindros'},{id:'hidr_vazamentos',label:'Vazamentos'},{id:'hidr_mangueiras',label:'Mangueiras'}] }, { id:'transmissao', title:'Transmissao e Freios', items:[{id:'trans_oleo',label:'Oleo transmissao'},{id:'freio_servico',label:'Freio de servico'},{id:'freio_estac',label:'Freio de estacionamento'},{id:'freio_pastilhas',label:'Pastilhas/Lonas'}] }, { id:'direcao', title:'Direcao', items:[{id:'dir_volante',label:'Volante'},{id:'dir_caixa',label:'Caixa de direcao'},{id:'dir_hidraulica',label:'Direcao hidraulica'}] }, { id:'estrutura', title:'Estrutura e Garfos', items:[{id:'est_mastros',label:'Mastros'},{id:'est_correntes',label:'Correntes'},{id:'est_garfos',label:'Garfos'},{id:'est_roletes',label:'Roletes'}] }, { id:'seguranca', title:'Seguranca', items:[{id:'seg_cinto',label:'Cinto de seguranca'},{id:'seg_extintor',label:'Extintor'},{id:'seg_espelhos',label:'Espelhos'},{id:'seg_alarme',label:'Alarme de re'}] } ],
-  maxFotos: 10,
-  googleSheetUrl: 'https://script.google.com/macros/s/AKfycbxaruTuaeEexgJGH_gqVKxEFp1qaID_XcKWMJwXS6frkyupwtl_aah3halvhZIF9m7Bjw/exec'
+  maxFotos: 10
 };
 
-var State = { 
-  currentStatus:'abertura', 
-  fotosServico:[], 
-  fotoHorimetro:null, 
-  fotosPendencias:[], 
-  clients:[], 
-  osHistory:[], 
-  editingClientId:null, 
-  hasUnsavedChanges:false,
-  osCounter: 0,
-  lastSync: null,
-  isOnline: true
-};
-
+var State = { currentStatus:'abertura', fotosServico:[], fotoHorimetro:null, fotosPendencias:[], clients:[], osHistory:[], editingClientId:null, hasUnsavedChanges:false, osCounter:0 };
 function $(id) { return document.getElementById(id); }
+function showToast(msg, isError) { var t = $('toastCenter'); if (!t) return; var msgSpan = $('toastMessage'); if (msgSpan) msgSpan.textContent = msg; t.style.borderColor = isError ? 'var(--danger)' : 'var(--success)'; t.classList.add('show'); setTimeout(function() { if (t) t.classList.remove('show'); }, 2500); }
 
-function showToast(msg, isError) {
-  var t = $('toastCenter');
-  if (!t) return;
-  var msgSpan = $('toastMessage');
-  if (msgSpan) msgSpan.textContent = msg;
-  t.style.borderColor = isError ? 'var(--danger)' : 'var(--success)';
-  t.classList.add('show');
-  setTimeout(function() { if (t) t.classList.remove('show'); }, 2500);
-}
-
-var Storage = {
-  saveClients: function() { localStorage.setItem('marlift_clientes', JSON.stringify(State.clients)); },
-  loadClients: function() { var data = localStorage.getItem('marlift_clientes'); State.clients = data ? JSON.parse(data) : []; return State.clients; },
-  saveOSHistory: function() { localStorage.setItem('marlift_os_history', JSON.stringify(State.osHistory)); },
-  loadOSHistory: function() { var data = localStorage.getItem('marlift_os_history'); State.osHistory = data ? JSON.parse(data) : []; return State.osHistory; },
-  saveCounter: function() { localStorage.setItem('marlift_os_counter', State.osCounter); },
-  loadCounter: function() { var data = localStorage.getItem('marlift_os_counter'); State.osCounter = data ? parseInt(data) : 0; return State.osCounter; },
-  clearAll: function() { localStorage.removeItem('marlift_clientes'); localStorage.removeItem('marlift_os_history'); localStorage.removeItem('marlift_os_counter'); }
+// ==================== STORAGE LOCAL ====================
+var Storage = { 
+  saveClients: function() { localStorage.setItem('marlift_clientes', JSON.stringify(State.clients)); }, 
+  loadClients: function() { var data = localStorage.getItem('marlift_clientes'); State.clients = data ? JSON.parse(data) : []; return State.clients; }, 
+  saveOSHistory: function() { localStorage.setItem('marlift_os_history', JSON.stringify(State.osHistory)); }, 
+  loadOSHistory: function() { var data = localStorage.getItem('marlift_os_history'); State.osHistory = data ? JSON.parse(data) : []; return State.osHistory; }, 
+  saveCounter: function() { localStorage.setItem('marlift_os_counter', State.osCounter); }, 
+  loadCounter: function() { var data = localStorage.getItem('marlift_os_counter'); State.osCounter = data ? parseInt(data) : 0; return State.osCounter; } 
 };
 
-var Utils = {
-  generateOSNumber: function() { State.osCounter = Storage.loadCounter(); State.osCounter++; Storage.saveCounter(); var now = new Date(); var yy = now.getFullYear().toString().slice(-2); var mm = String(now.getMonth() + 1).padStart(2, '0'); var os = 'OS-' + yy + mm + '-' + String(State.osCounter).padStart(4, '0'); var inp = $('numeroOS'); if (inp) inp.value = os; return os; },
-  setDefaultDate: function() { var inp = $('dataOS'); if (inp && !inp.value) inp.value = new Date().toISOString().split('T')[0]; },
-  getVal: function(id) { var e = $(id); return e ? e.value : ''; },
-  setVal: function(id, v) { var e = $(id); if (e) e.value = v || ''; },
-  formatStatus: function(st) { var map = {abertura:'ABERTURA', execucao:'EM EXECUCAO', finalizacao:'FINALIZANDO', fechada:'FECHADA', aprovada:'APROVADA'}; return map[st] || (st || '').toUpperCase(); },
-  formatTipoChamado: function(tipo) { var map = {normal:'NORMAL', emergencial:'EMERGENCIAL', garantia:'GARANTIA', preventiva:'PREVENTIVA', corretiva:'CORRETIVA', avaliacao:'AVALIAÇÃO', orcamento:'ORÇAMENTO'}; return map[tipo] || tipo.toUpperCase(); },
-  timeDiff: function(s, e) { if (!s || !e) return 0; var sp = s.split(':').map(Number), ep = e.split(':').map(Number); var diff = (ep[0]*60 + ep[1]) - (sp[0]*60 + sp[1]); if (diff < 0) diff += 1440; return diff; },
-  timeToMinutes: function(t) { if (!t) return 0; if (t.indexOf('h') !== -1) return parseInt(t) * 60; var p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); }
+// ==================== UTILS ====================
+var Utils = { 
+  generateOSNumber: function() { State.osCounter = Storage.loadCounter(); State.osCounter++; Storage.saveCounter(); var now = new Date(), yy = now.getFullYear().toString().slice(-2), mm = String(now.getMonth() + 1).padStart(2, '0'), os = 'OS-' + yy + mm + '-' + String(State.osCounter).padStart(4, '0'); if($('numeroOS')) $('numeroOS').value = os; return os; }, 
+  setDefaultDate: function() { var inp = $('dataOS'); if(inp && !inp.value) inp.value = new Date().toISOString().split('T')[0]; }, 
+  getVal: function(id) { var e = $(id); return e ? e.value : ''; }, 
+  setVal: function(id, v) { var e = $(id); if(e) e.value = v || ''; }, 
+  formatStatus: function(st) { var map = {abertura:'ABERTURA', execucao:'EM EXECUCAO', finalizacao:'FINALIZANDO', fechada:'FECHADA', aprovada:'APROVADA'}; return map[st] || (st || '').toUpperCase(); }, 
+  formatTipoChamado: function(tipo) { var map = {normal:'NORMAL', emergencial:'EMERGENCIAL', garantia:'GARANTIA', preventiva:'PREVENTIVA', corretiva:'CORRETIVA', avaliacao:'AVALIAÇÃO', orcamento:'ORÇAMENTO'}; return map[tipo] || tipo.toUpperCase(); }, 
+  timeDiff: function(s, e) { if(!s||!e) return 0; var sp = s.split(':').map(Number), ep = e.split(':').map(Number); var diff = (ep[0]*60+ep[1]) - (sp[0]*60+sp[1]); if(diff<0) diff+=1440; return diff; }, 
+  timeToMinutes: function(t) { if(!t) return 0; if(t.indexOf('h')!==-1) return parseInt(t)*60; var p=t.split(':'); return parseInt(p[0])*60+parseInt(p[1]); } 
 };
 
+// ==================== TIMER ====================
 var Timer = { 
   interval: null, seconds: 0, running: false, paused: false,
-  control: function(a) { if (a === 'start') this.start(); else if (a === 'pause') this.pause(); else if (a === 'stop') this.stop(); },
+  control: function(a) { if(a==='start') this.start(); else if(a==='pause') this.pause(); else if(a==='stop') this.stop(); },
   start: function() { 
-    if (this.running && !this.paused) return; 
-    if (this.paused) { 
-      if (!Utils.getVal('horaAlmocoRetorno')) { var n = new Date(); Utils.setVal('horaAlmocoRetorno', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); }
-      this.paused = false; this.running = true; 
+    if(this.running&&!this.paused) return; 
+    if(this.paused) { 
+      if(!Utils.getVal('horaAlmocoRetorno')) { var n=new Date(); Utils.setVal('horaAlmocoRetorno', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); }
+      this.paused=false; this.running=true; 
     } else { 
-      this.running = true; this.paused = false; if (this.seconds === 0) this.reset(); 
-      if (!Utils.getVal('horaInicio')) { var n = new Date(); Utils.setVal('horaInicio', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); }
+      this.running=true; this.paused=false; if(this.seconds===0) this.reset(); 
+      if(!Utils.getVal('horaInicio')) { var n=new Date(); Utils.setVal('horaInicio', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); }
     } 
-    if (this.interval) clearInterval(this.interval); 
-    var self = this; 
-    this.interval = setInterval(function() { if (!self.paused && self.running) { self.seconds++; self.updateDisplay(); } }, 1000); 
+    if(this.interval) clearInterval(this.interval); 
+    var self=this; 
+    this.interval=setInterval(function() { if(!self.paused && self.running) { self.seconds++; self.updateDisplay(); } }, 1000); 
   },
-  pause: function() { if (!this.running) return; this.paused = true; if (!Utils.getVal('horaAlmocoSaida')) { var n = new Date(); Utils.setVal('horaAlmocoSaida', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); } },
-  stop: function() { if (!this.running) return; clearInterval(this.interval); this.running = false; this.paused = false; if (!Utils.getVal('horaTermino')) { var n = new Date(); Utils.setVal('horaTermino', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); } Horas.calcular(); },
-  reset: function() { this.seconds = 0; var d = $('timerDisplay'); if (d) d.textContent = '00:00:00'; },
-  updateDisplay: function() { var h = Math.floor(this.seconds/3600), m = Math.floor((this.seconds%3600)/60), s = this.seconds%60; var d = $('timerDisplay'); if (d) d.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
+  pause: function() { if(!this.running) return; this.paused=true; if(!Utils.getVal('horaAlmocoSaida')) { var n=new Date(); Utils.setVal('horaAlmocoSaida', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); } },
+  stop: function() { if(!this.running) return; clearInterval(this.interval); this.running=false; this.paused=false; if(!Utils.getVal('horaTermino')) { var n=new Date(); Utils.setVal('horaTermino', n.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})); } Horas.calcular(); },
+  reset: function() { this.seconds=0; var d=$('timerDisplay'); if(d) d.textContent='00:00:00'; },
+  updateDisplay: function() { var h=Math.floor(this.seconds/3600), m=Math.floor((this.seconds%3600)/60), s=this.seconds%60; var d=$('timerDisplay'); if(d) d.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); } 
 };
 
+// ==================== HORAS ====================
 var Horas = { 
-  calcular: function() { var i = Utils.getVal('horaInicio'), t = Utils.getVal('horaTermino'); if (!i || !t) return 0; var total = Utils.timeDiff(i, t); var saida = Utils.getVal('horaAlmocoSaida'), retorno = Utils.getVal('horaAlmocoRetorno'); if (saida && retorno) total -= Utils.timeDiff(saida, retorno); var horas = Math.ceil(total / 60); if (horas < 1) horas = 1; Utils.setVal('horasTotais', horas + 'h'); this.updateTotal(); return horas; },
-  updateTotal: function() { var hs = Utils.getVal('horasTotais'); var min = 0; if (hs) { var m = hs.match(/(\d+)h/); if (m) min = parseInt(m[1]) * 60; } var extra = Utils.timeToMinutes(Utils.getVal('horasExtras')), not = Utils.timeToMinutes(Utils.getVal('adicionalNoturno')); var total = min + extra + not; var h = Math.floor(total / 60), m = total % 60; Utils.setVal('totalGeral', String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')); },
-  initListeners: function() { var self = this; ['horaInicio','horaTermino','horaAlmocoSaida','horaAlmocoRetorno'].forEach(function(id) { var el = $(id); if (el) el.addEventListener('change', function() { self.calcular(); }); }); var extras = $('horasExtras'); if (extras) extras.addEventListener('input', function() { self.updateTotal(); }); var noturno = $('adicionalNoturno'); if (noturno) noturno.addEventListener('input', function() { self.updateTotal(); }); }
+  calcular: function() { var i=Utils.getVal('horaInicio'), t=Utils.getVal('horaTermino'); if(!i||!t) return 0; var total=Utils.timeDiff(i,t); var saida=Utils.getVal('horaAlmocoSaida'), retorno=Utils.getVal('horaAlmocoRetorno'); if(saida&&retorno) total-=Utils.timeDiff(saida,retorno); var horas=Math.ceil(total/60); if(horas<1) horas=1; Utils.setVal('horasTotais', horas+'h'); this.updateTotal(); return horas; }, 
+  updateTotal: function() { var hs=Utils.getVal('horasTotais'); var min=0; if(hs) { var m=hs.match(/(\d+)h/); if(m) min=parseInt(m[1])*60; } var extra=Utils.timeToMinutes(Utils.getVal('horasExtras')), not=Utils.timeToMinutes(Utils.getVal('adicionalNoturno')); var total=min+extra+not; var h=Math.floor(total/60), m=total%60; Utils.setVal('totalGeral', String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')); }, 
+  initListeners: function() { var self=this; ['horaInicio','horaTermino','horaAlmocoSaida','horaAlmocoRetorno'].forEach(function(id) { var el=$(id); if(el) el.addEventListener('change', function() { self.calcular(); }); }); var extras=$('horasExtras'); if(extras) extras.addEventListener('input', function() { self.updateTotal(); }); var noturno=$('adicionalNoturno'); if(noturno) noturno.addEventListener('input', function() { self.updateTotal(); }); } 
 };
 
+// ==================== ASSINATURA ====================
 var Signature = { 
   canvases: {}, drawing: {tec:false, cli:false},
-  init: function() { this.canvases.tec = $('sigTecnicoCanvas'); this.canvases.cli = $('sigClienteCanvas'); this.setupCanvas('tec'); this.setupCanvas('cli'); this.clear('tec'); this.clear('cli'); },
-  setupCanvas: function(who) { var self = this, canvas = this.canvases[who]; if (!canvas) return; var ctx = canvas.getContext('2d'); ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; var draw = function(e) { if (!self.drawing[who]) return; var rect = canvas.getBoundingClientRect(); var scaleX = canvas.width / rect.width; var scaleY = canvas.height / rect.height; var cx = e.touches ? e.touches[0].clientX : e.clientX; var cy = e.touches ? e.touches[0].clientY : e.clientY; var x = (cx - rect.left) * scaleX; var y = (cy - rect.top) * scaleY; ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y); }; var start = function(e) { self.drawing[who] = true; ctx.beginPath(); draw(e); }; var stop = function() { self.drawing[who] = false; ctx.beginPath(); }; canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop); canvas.addEventListener('touchstart', function(e) { e.preventDefault(); start(e.touches[0]); }, {passive: false}); canvas.addEventListener('touchmove', function(e) { e.preventDefault(); draw(e.touches[0]); }, {passive: false}); canvas.addEventListener('touchend', stop); },
-  clear: function(who) { var canvas = this.canvases[who]; if (!canvas) return; var ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; Utils.setVal(who === 'tec' ? 'assinaturaTecnicoData' : 'assinaturaClienteData', ''); },
-  save: function(who) { var canvas = this.canvases[who]; if (!canvas) return; var dataURL = canvas.toDataURL('image/png'); Utils.setVal(who === 'tec' ? 'assinaturaTecnicoData' : 'assinaturaClienteData', dataURL); showToast('Assinatura salva'); State.hasUnsavedChanges = true; },
-  loadFromData: function(who, dataUrl) { if (!dataUrl) return; var canvas = this.canvases[who]; if (!canvas) return; var ctx = canvas.getContext('2d'); var img = new Image(); img.onload = function() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); Utils.setVal(who === 'tec' ? 'assinaturaTecnicoData' : 'assinaturaClienteData', dataUrl); }; img.src = dataUrl; }
+  init: function() { this.canvases.tec=$('sigTecnicoCanvas'); this.canvases.cli=$('sigClienteCanvas'); this.setupCanvas('tec'); this.setupCanvas('cli'); this.clear('tec'); this.clear('cli'); },
+  setupCanvas: function(who) { var self=this, canvas=this.canvases[who]; if(!canvas) return; var ctx=canvas.getContext('2d'); ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.lineJoin='round'; var draw=function(e) { if(!self.drawing[who]) return; var rect=canvas.getBoundingClientRect(); var scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height; var cx=e.touches?e.touches[0].clientX:e.clientX, cy=e.touches?e.touches[0].clientY:e.clientY; var x=(cx-rect.left)*scaleX, y=(cy-rect.top)*scaleY; ctx.lineTo(x,y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x,y); }; var start=function(e) { self.drawing[who]=true; ctx.beginPath(); draw(e); }; var stop=function() { self.drawing[who]=false; ctx.beginPath(); }; canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',draw); canvas.addEventListener('mouseup',stop); canvas.addEventListener('mouseleave',stop); canvas.addEventListener('touchstart',function(e){e.preventDefault(); start(e.touches[0]);},{passive:false}); canvas.addEventListener('touchmove',function(e){e.preventDefault(); draw(e.touches[0]);},{passive:false}); canvas.addEventListener('touchend',stop); },
+  clear:function(who){ var canvas=this.canvases[who]; if(!canvas) return; var ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; Utils.setVal(who==='tec'?'assinaturaTecnicoData':'assinaturaClienteData',''); },
+  save:function(who){ var canvas=this.canvases[who]; if(!canvas) return; var dataURL=canvas.toDataURL('image/png'); Utils.setVal(who==='tec'?'assinaturaTecnicoData':'assinaturaClienteData',dataURL); showToast('Assinatura salva'); State.hasUnsavedChanges=true; },
+  loadFromData:function(who,dataUrl){ if(!dataUrl) return; var canvas=this.canvases[who]; if(!canvas) return; var ctx=canvas.getContext('2d'); var img=new Image(); img.onload=function(){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); Utils.setVal(who==='tec'?'assinaturaTecnicoData':'assinaturaClienteData',dataUrl); }; img.src=dataUrl; } 
 };
 
+// ==================== FOTOS ====================
 var Fotos = {
-  compress: function(b64) { return new Promise(function(resolve, reject) { var img = new Image(); img.src = b64; img.onload = function() { var canvas = document.createElement('canvas'); var w = img.width, h = img.height; var tw = 800, th = 600, ratio = Math.min(tw / w, th / h); w = Math.round(w * ratio); h = Math.round(h * ratio); canvas.width = w; canvas.height = h; var ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL('image/jpeg', 0.7)); }; img.onerror = function() { reject(new Error('Falha ao carregar')); }; }); },
-  init: function() { 
-    var self = this;
-    var fotoHorimetroInput = $('fotoHorimetroInput');
-    if (fotoHorimetroInput) {
-      fotoHorimetroInput.addEventListener('change', async function(e) {
-        var file = e.target.files[0];
-        if (file) {
-          var reader = new FileReader();
-          reader.onload = async function(ev) {
-            try {
-              State.fotoHorimetro = await self.compress(ev.target.result);
-              var preview = $('fotoHorimetroPreview');
-              if (preview) preview.innerHTML = '<div class="photo-item"><img src="' + State.fotoHorimetro + '"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>';
-              State.hasUnsavedChanges = true;
-              showToast('Foto carregada');
-            } catch (err) { showToast('Erro ao processar', true); }
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    }
-    var fotosServico = $('fotosServico');
-    if (fotosServico) {
-      fotosServico.addEventListener('change', async function(e) {
-        var files = Array.from(e.target.files);
-        if (State.fotosServico.length + files.length > Config.maxFotos) {
-          showToast('Máximo de ' + Config.maxFotos + ' fotos.', true);
-          return;
-        }
-        var preview = $('fotosPreview');
-        for (var i = 0; i < files.length; i++) {
-          var file = files[i];
-          var reader = new FileReader();
-          await new Promise(function(resolve) {
-            reader.onload = async function(ev) {
-              try {
-                var compressed = await self.compress(ev.target.result);
-                State.fotosServico.push(compressed);
-                if (preview) {
-                  var div = document.createElement('div');
-                  div.className = 'photo-item';
-                  div.innerHTML = '<img src="' + compressed + '"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>';
-                  preview.appendChild(div);
-                }
-              } catch (err) { console.error(err); }
-              resolve();
-            };
-            reader.readAsDataURL(file);
-          });
-        }
-        fotosServico.value = '';
-        State.hasUnsavedChanges = true;
-      });
-    }
-    var fotosPendencias = $('fotosPendenciasInput');
-    if (fotosPendencias) {
-      fotosPendencias.addEventListener('change', async function(e) {
-        var files = Array.from(e.target.files);
-        if (State.fotosPendencias.length + files.length > Config.maxFotos) {
-          showToast('Máximo de ' + Config.maxFotos + ' fotos de pendências.', true);
-          return;
-        }
-        var preview = $('fotosPendenciasPreview');
-        for (var i = 0; i < files.length; i++) {
-          var file = files[i];
-          var reader = new FileReader();
-          await new Promise(function(resolve) {
-            reader.onload = async function(ev) {
-              try {
-                var compressed = await self.compress(ev.target.result);
-                State.fotosPendencias.push(compressed);
-                if (preview) {
-                  var div = document.createElement('div');
-                  div.className = 'photo-item';
-                  div.innerHTML = '<img src="' + compressed + '"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>';
-                  preview.appendChild(div);
-                }
-              } catch (err) { console.error(err); }
-              resolve();
-            };
-            reader.readAsDataURL(file);
-          });
-        }
-        fotosPendencias.value = '';
-        State.hasUnsavedChanges = true;
-      });
-    }
-  },
-  removeHorimetro: function() { State.fotoHorimetro = null; var inp = $('fotoHorimetroInput'); if (inp) inp.value = ''; var preview = $('fotoHorimetroPreview'); if (preview) preview.innerHTML = ''; },
-  removeServico: function(el) { var container = el.parentNode.parentNode; var idx = Array.from(container.children).indexOf(el.parentNode); if (idx !== -1) { State.fotosServico.splice(idx, 1); el.parentNode.remove(); } },
-  removePendencia: function(el) { var container = el.parentNode.parentNode; var idx = Array.from(container.children).indexOf(el.parentNode); if (idx !== -1) { State.fotosPendencias.splice(idx, 1); el.parentNode.remove(); } }
+  compress: function(b64) { return new Promise(function(resolve, reject) { var img=new Image(); img.src=b64; img.onload=function(){ var canvas=document.createElement('canvas'); var w=img.width, h=img.height, tw=800, th=600, ratio=Math.min(tw/w, th/h); w=Math.round(w*ratio); h=Math.round(h*ratio); canvas.width=w; canvas.height=h; var ctx=canvas.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); resolve(canvas.toDataURL('image/jpeg',0.7)); }; img.onerror=function(){ reject(new Error('Falha ao carregar')); }; }); },
+  init: function() { var self=this;
+    var fotoHorimetroInput=$('fotoHorimetroInput'); if(fotoHorimetroInput) fotoHorimetroInput.addEventListener('change', async function(e){ var file=e.target.files[0]; if(file){ var reader=new FileReader(); reader.onload=async function(ev){ try{ State.fotoHorimetro=await self.compress(ev.target.result); var preview=$('fotoHorimetroPreview'); if(preview) preview.innerHTML='<div class="photo-item"><img src="'+State.fotoHorimetro+'"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>'; State.hasUnsavedChanges=true; showToast('Foto carregada'); }catch(err){ showToast('Erro ao processar',true); } }; reader.readAsDataURL(file); } });
+    var fotosServico=$('fotosServico'); if(fotosServico) fotosServico.addEventListener('change', async function(e){ var files=Array.from(e.target.files); if(State.fotosServico.length+files.length>Config.maxFotos){ showToast('Máximo de '+Config.maxFotos+' fotos.',true); return; } var preview=$('fotosPreview'); for(var i=0;i<files.length;i++){ var file=files[i]; var reader=new FileReader(); await new Promise(function(resolve){ reader.onload=async function(ev){ try{ var compressed=await self.compress(ev.target.result); State.fotosServico.push(compressed); if(preview){ var div=document.createElement('div'); div.className='photo-item'; div.innerHTML='<img src="'+compressed+'"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>'; preview.appendChild(div); } }catch(err){ console.error(err); } resolve(); }; reader.readAsDataURL(file); }); } fotosServico.value=''; State.hasUnsavedChanges=true; });
+    var fotosPendencias=$('fotosPendenciasInput'); if(fotosPendencias) fotosPendencias.addEventListener('change', async function(e){ var files=Array.from(e.target.files); if(State.fotosPendencias.length+files.length>Config.maxFotos){ showToast('Máximo de '+Config.maxFotos+' fotos de pendências.',true); return; } var preview=$('fotosPendenciasPreview'); for(var i=0;i<files.length;i++){ var file=files[i]; var reader=new FileReader(); await new Promise(function(resolve){ reader.onload=async function(ev){ try{ var compressed=await self.compress(ev.target.result); State.fotosPendencias.push(compressed); if(preview){ var div=document.createElement('div'); div.className='photo-item'; div.innerHTML='<img src="'+compressed+'"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>'; preview.appendChild(div); } }catch(err){ console.error(err); } resolve(); }; reader.readAsDataURL(file); }); } fotosPendencias.value=''; State.hasUnsavedChanges=true; }); },
+  removeHorimetro:function(){ State.fotoHorimetro=null; var inp=$('fotoHorimetroInput'); if(inp) inp.value=''; var preview=$('fotoHorimetroPreview'); if(preview) preview.innerHTML=''; },
+  removeServico:function(el){ var container=el.parentNode.parentNode; var idx=Array.from(container.children).indexOf(el.parentNode); if(idx!==-1){ State.fotosServico.splice(idx,1); el.parentNode.remove(); } },
+  removePendencia:function(el){ var container=el.parentNode.parentNode; var idx=Array.from(container.children).indexOf(el.parentNode); if(idx!==-1){ State.fotosPendencias.splice(idx,1); el.parentNode.remove(); } } 
 };
 
+// ==================== CHECKLIST ====================
 var Checklist = { 
-  total: 0, checked: 0,
-  render: function() { var container = $('checklistSections'); if (!container) return; container.innerHTML = ''; this.total = 0; var self = this; Config.checklist.forEach(function(section) { self.total += section.items.length; var div = document.createElement('div'); div.className = 'checklist-card p-5 mb-4'; var itemsHtml = section.items.map(function(item) { return '<div class="checklist-item"><label><input type="checkbox" data-check="true" id="' + item.id + '" onchange="Checklist.updateProgress()"><span class="text-sm">' + item.label + '</span></label><select class="form-input w-20 text-xs" id="' + item.id + '_status"><option value="ok">OK</option><option value="atencao">Atencao</option><option value="critico">Critico</option><option value="na">N/A</option></select></div>'; }).join(''); div.innerHTML = '<div class="flex justify-between items-center mb-3"><h3 class="font-display text-xl">' + section.title + '</h3><button type="button" class="btn btn-secondary text-xs" onclick="Checklist.selectAll(\'' + section.id + '\')">Selecionar Todos</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-2">' + itemsHtml + '</div>'; container.appendChild(div); }); this.updateProgress(); },
-  selectAll: function(sectionId) { var section = Config.checklist.find(function(s) { return s.id === sectionId; }); if (section) { section.items.forEach(function(item) { var cb = $(item.id); if (cb) cb.checked = true; }); } this.updateProgress(); },
-  updateProgress: function() { var checkboxes = document.querySelectorAll('input[data-check="true"]'); this.checked = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length; var pct = this.total > 0 ? Math.round((this.checked / this.total) * 100) : 0; var progText = $('progressText'); if (progText) progText.textContent = pct + '%'; var fill = $('progressFill'); if (fill) fill.style.width = pct + '%'; }
+  total:0, checked:0,
+  render:function(){ var container=$('checklistSections'); if(!container) return; container.innerHTML=''; this.total=0; var self=this; Config.checklist.forEach(function(section){ self.total+=section.items.length; var div=document.createElement('div'); div.className='checklist-card p-5 mb-4'; var itemsHtml=section.items.map(function(item){ return '<div class="checklist-item"><label><input type="checkbox" data-check="true" id="'+item.id+'" onchange="Checklist.updateProgress()"><span class="text-sm">'+item.label+'</span></label><select class="form-input w-20 text-xs" id="'+item.id+'_status"><option value="ok">OK</option><option value="atencao">Atencao</option><option value="critico">Critico</option><option value="na">N/A</option></select></div>'; }).join(''); div.innerHTML='<div class="flex justify-between items-center mb-3"><h3 class="font-display text-xl">'+section.title+'</h3><button type="button" class="btn btn-secondary text-xs" onclick="Checklist.selectAll(\''+section.id+'\')">Selecionar Todos</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-2">'+itemsHtml+'</div>'; container.appendChild(div); }); this.updateProgress(); },
+  selectAll:function(sectionId){ var section=Config.checklist.find(function(s){ return s.id===sectionId;}); if(section){ section.items.forEach(function(item){ var cb=$(item.id); if(cb) cb.checked=true; }); } this.updateProgress(); },
+  updateProgress:function(){ var checkboxes=document.querySelectorAll('input[data-check="true"]'); this.checked=Array.from(checkboxes).filter(function(cb){ return cb.checked; }).length; var pct=this.total>0?Math.round((this.checked/this.total)*100):0; var progText=$('progressText'); if(progText) progText.textContent=pct+'%'; var fill=$('progressFill'); if(fill) fill.style.width=pct+'%'; } 
 };
 
-// Google Sheets Sync - Versão Corrigida
-var GoogleSheets = {
-  syncToCloud: async function() {
-    try {
-      showToast('☁️ Enviando dados para a nuvem...');
-      
-      var syncBtn = $('btnSyncCloud');
-      if (syncBtn) {
-        syncBtn.disabled = true;
-        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
-      }
-      
-      var dataToSync = {
-        clients: State.clients,
-        osHistory: State.osHistory,
-        osCounter: State.osCounter,
-        timestamp: new Date().toISOString()
-      };
-      
-      var response = await fetch(Config.googleSheetUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', data: dataToSync })
-      });
-      
-      showToast('✅ Dados enviados para sincronização!');
-      State.lastSync = new Date().toISOString();
-      localStorage.setItem('marlift_last_sync', State.lastSync);
-      GoogleSheets.updateSyncStatus(true);
-      
-    } catch (error) {
-      console.error('Erro na sincronização:', error);
-      showToast('⚠️ Dados salvos localmente. Sincronize quando tiver conexão.', true);
-      GoogleSheets.updateSyncStatus(false);
-      
-      localStorage.setItem('marlift_pending_sync', JSON.stringify({
-        clients: State.clients,
-        osHistory: State.osHistory,
-        osCounter: State.osCounter,
-        timestamp: new Date().toISOString()
-      }));
-      
-    } finally {
-      if (syncBtn) {
-        setTimeout(() => {
-          syncBtn.disabled = false;
-          syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizar Agora';
-        }, 2000);
-      }
-    }
-  },
-  
-  loadFromCloud: async function() {
-    try {
-      showToast('☁️ Carregando dados da nuvem...');
-      
-      var loadBtn = $('btnLoadCloud');
-      if (loadBtn) {
-        loadBtn.disabled = true;
-        loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
-      }
-      
-      var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
-        method: 'GET',
-        mode: 'cors'
-      });
-      
-      if (response && response.ok) {
-        var result = await response.json();
-        
-        if (result && result.success && result.data) {
-          var loadedCount = 0;
-          
-          if (result.data.clients && Array.isArray(result.data.clients) && result.data.clients.length > 0) {
-            State.clients = result.data.clients;
-            Storage.saveClients();
-            Clientes.load();
-            loadedCount += result.data.clients.length;
-            showToast(`📋 ${result.data.clients.length} clientes carregados`, false);
-          }
-          
-          if (result.data.osHistory && Array.isArray(result.data.osHistory) && result.data.osHistory.length > 0) {
-            State.osHistory = result.data.osHistory;
-            Storage.saveOSHistory();
-            Historico.load();
-            loadedCount += result.data.osHistory.length;
-            showToast(`📝 ${result.data.osHistory.length} OS carregadas`, false);
-          }
-          
-          if (result.data.osCounter !== undefined && result.data.osCounter > 0) {
-            State.osCounter = result.data.osCounter;
-            Storage.saveCounter();
-          }
-          
-          if (loadedCount > 0) {
-            showToast(`✅ ${loadedCount} registros carregados da nuvem!`);
-            App.updateUI();
-            Historico.render();
-            Clientes.renderTable();
-            GoogleSheets.updateSyncStatus(true);
-          } else {
-            showToast('📭 Nenhum dado encontrado na nuvem', true);
-          }
-        } else {
-          showToast('📭 Nenhum dado encontrado na nuvem', true);
-        }
-      } else {
-        throw new Error('Erro na resposta do servidor');
-      }
-      
-    } catch (error) {
-      console.error('Erro ao carregar:', error);
-      showToast('❌ Erro ao carregar dados da nuvem.', true);
-      GoogleSheets.updateSyncStatus(false);
-      
-      var pendingSync = localStorage.getItem('marlift_pending_sync');
-      if (pendingSync && confirm('Dados locais encontrados. Deseja carregá-los?')) {
-        var pending = JSON.parse(pendingSync);
-        if (pending.clients) State.clients = pending.clients;
-        if (pending.osHistory) State.osHistory = pending.osHistory;
-        if (pending.osCounter) State.osCounter = pending.osCounter;
-        Storage.saveClients();
-        Storage.saveOSHistory();
-        Storage.saveCounter();
-        Clientes.load();
-        Historico.load();
-        App.updateUI();
-        showToast('📱 Dados locais carregados', false);
-      }
-      
-    } finally {
-      if (loadBtn) {
-        setTimeout(() => {
-          loadBtn.disabled = false;
-          loadBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Carregar da Nuvem';
-        }, 2000);
-      }
-    }
-  },
-  
-  checkConnection: async function() {
-    try {
-      var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
-        method: 'GET',
-        mode: 'cors'
-      });
-      
-      if (response && response.ok) {
-        State.isOnline = true;
-        GoogleSheets.updateSyncStatus(true);
-        return true;
-      } else {
-        State.isOnline = false;
-        GoogleSheets.updateSyncStatus(false);
-        return false;
-      }
-    } catch (error) {
-      State.isOnline = false;
-      GoogleSheets.updateSyncStatus(false);
-      return false;
-    }
-  },
-  
-  updateSyncStatus: function(isOnline) {
-    var dot = $('syncDot');
-    var text = $('syncText');
-    if (dot && text) {
-      if (isOnline) {
-        dot.className = 'sync-dot online';
-        text.textContent = '✅ Online - Sincronizado';
-      } else {
-        dot.className = 'sync-dot offline';
-        text.textContent = '⚠️ Offline - Dados salvos localmente';
-      }
-    }
-  },
-  
-  retryPendingSync: async function() {
-    var pendingSync = localStorage.getItem('marlift_pending_sync');
-    if (pendingSync) {
-      showToast('🔄 Tentando sincronizar dados pendentes...', false);
-      var pending = JSON.parse(pendingSync);
-      State.clients = pending.clients || State.clients;
-      State.osHistory = pending.osHistory || State.osHistory;
-      State.osCounter = pending.osCounter || State.osCounter;
-      
-      await GoogleSheets.syncToCloud();
-      
-      if (State.lastSync) {
-        localStorage.removeItem('marlift_pending_sync');
-        showToast('✅ Dados pendentes sincronizados!', false);
-      }
-    }
-  }
-};
-
-// Sincronização automática a cada 60 segundos
-setInterval(async function() {
-  if (State.isOnline && (State.osHistory.length > 0 || State.clients.length > 0)) {
-    var lastSync = localStorage.getItem('marlift_last_sync');
-    var now = Date.now();
-    if (!lastSync || (now - parseInt(lastSync)) > 60000) {
-      await GoogleSheets.syncToCloud();
-      localStorage.setItem('marlift_last_sync', now.toString());
-    }
-  }
-}, 60000);
-
-// Verificar conexão periodicamente
-setInterval(async function() {
-  await GoogleSheets.checkConnection();
-}, 30000);
-
-// Inicialização
-setTimeout(async function() {
-  await GoogleSheets.checkConnection();
-  if (State.isOnline) {
-    await GoogleSheets.retryPendingSync();
-  }
-}, 3000);
-
+// ==================== CLIENTES ====================
 var Clientes = { 
-  load: function() { State.clients = Storage.loadClients(); this.renderTable(); this.updateStats(); },
-  updateStats: function() { var totalClientes = State.clients.length; var totalMarcas = 0; State.clients.forEach(function(c) { totalMarcas += (c.equipamentos || []).length; }); var clientesComOS = new Set(); var totalOS = 0; var osAbertas = 0; var osAprovadas = 0; State.osHistory.forEach(function(os) { if (os.cliente) { clientesComOS.add(os.cliente); totalOS++; } if (os.status === 'abertura' || os.status === 'execucao' || os.status === 'finalizacao') osAbertas++; if (os.status === 'aprovada') osAprovadas++; }); $('statTotalClientes').innerText = totalClientes; $('statTotalMarcas').innerText = totalMarcas; $('statClientesComOS').innerText = clientesComOS.size; $('statTotalOSClientes').innerText = totalOS; $('statOSAbertasCliente').innerText = osAbertas; $('statOSAprovadasCliente').innerText = osAprovadas; },
-  renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + c.nome + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
-  addEquipField: function(marca, modelo, serie, qtd, combustivel) { marca = marca || ''; modelo = modelo || ''; serie = serie || ''; qtd = qtd || 1; combustivel = combustivel || ''; var container = $('equipamentosList'); if (!container) return; var div = document.createElement('div'); div.className = 'equip-item'; var options = Config.marcas.map(function(m) { return '<option value="' + m + '"' + (marca === m ? ' selected' : '') + '>' + m + '</option>'; }).join(''); div.innerHTML = '<select class="form-input w-24 equip-marca">' + options + '<option value="OUTRA">OUTRA</option></select><div class="outra-marca-container" style="display:none"><input type="text" placeholder="Outra marca" class="form-input w-24 outra-marca"></div><input type="text" placeholder="Modelo" class="form-input w-24 equip-modelo" value="' + modelo + '"><input type="text" placeholder="Serie" class="form-input w-24 equip-serie" value="' + serie + '"><input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="' + qtd + '"><select class="form-input w-28 equip-combustivel"><option value="">Combustível</option><option value="eletrico" ' + (combustivel === 'eletrico' ? 'selected' : '') + '>Elétrico</option><option value="diesel" ' + (combustivel === 'diesel' ? 'selected' : '') + '>Diesel</option><option value="gasolina" ' + (combustivel === 'gasolina' ? 'selected' : '') + '>Gasolina</option><option value="glp" ' + (combustivel === 'glp' ? 'selected' : '') + '>GLP</option></select><button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>'; container.appendChild(div); var select = div.querySelector('.equip-marca'); var outraDiv = div.querySelector('.outra-marca-container'); select.addEventListener('change', function() { outraDiv.style.display = select.value === 'OUTRA' ? 'block' : 'none'; }); if (marca && Config.marcas.indexOf(marca) === -1) { select.value = 'OUTRA'; div.querySelector('.outra-marca').value = marca; outraDiv.style.display = 'block'; } },
-  save: function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marca = item.querySelector('.equip-marca').value; var outra = item.querySelector('.outra-marca') ? item.querySelector('.outra-marca').value : ''; equipamentos.push({ marca: marca === 'OUTRA' ? outra.toUpperCase() : marca, modelo: item.querySelector('.equip-modelo').value, serie: item.querySelector('.equip-serie').value, qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value }); }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); },
-  select: function(id) { 
-    var c = State.clients.find(function(c) { return c.id === id; });
-    if (!c) return;
-    if (c.equipamentos && c.equipamentos.length > 0) {
-      App.mostrarModalEquipamentos(c);
-    } else {
-      Utils.setVal('cliente', c.nome);
-      Utils.setVal('cnpj', c.cnpj);
-      Utils.setVal('cidadeCliente', c.cidade);
-      Utils.setVal('endereco', c.endereco);
-      Utils.setVal('whatsappCliente', c.whatsapp);
-      showToast('Cliente carregado');
-      var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]');
-      if (tabOsBtn) tabOsBtn.click();
-    }
-  },
-  edit: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; State.editingClientId = id; Utils.setVal('cad_nome', c.nome); Utils.setVal('cad_cnpj', c.cnpj); Utils.setVal('cad_endereco', c.endereco); Utils.setVal('cad_cidade', c.cidade); Utils.setVal('cad_telefone', c.telefone); Utils.setVal('cad_whatsapp', c.whatsapp); Utils.setVal('cad_email', c.email || ''); Utils.setVal('cad_responsavel_nome', c.responsavel_nome || ''); Utils.setVal('cad_responsavel_telefone', c.responsavel_telefone || ''); var container = $('equipamentosList'); if (container) container.innerHTML = ''; if (c.equipamentos && c.equipamentos.length) { c.equipamentos.forEach(function(eq) { Clientes.addEquipField(eq.marca, eq.modelo, eq.serie, eq.qtd, eq.combustivel); }); } var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'inline-flex'; showToast('Editando cliente'); },
-  delete: function(id) { if (!confirm('Excluir este cliente?')) return; State.clients = State.clients.filter(function(c) { return c.id !== id; }); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluído'); },
-  cancelEdit: function() { State.editingClientId = null; this.clearForm(); var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; },
-  clearForm: function() { ['cad_nome','cad_cnpj','cad_endereco','cad_cidade','cad_telefone','cad_whatsapp','cad_email','cad_responsavel_nome','cad_responsavel_telefone'].forEach(function(id) { Utils.setVal(id, ''); }); var container = $('equipamentosList'); if (container) container.innerHTML = ''; },
-  exportCSV: function() { var csv = "Nome,CNPJ,Endereco,Cidade,Telefone,WhatsApp,Email,Responsavel,TelefoneResponsavel,Marcas\n"; State.clients.forEach(function(c) { var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join('; '); csv += '"' + c.nome + '",' + (c.cnpj || '') + ',"' + (c.endereco || '') + '","' + (c.cidade || '') + '",' + (c.telefone || '') + ',' + (c.whatsapp || '') + ',' + (c.email || '') + ',' + (c.responsavel_nome || '') + ',' + (c.responsavel_telefone || '') + ',"' + marcasLista + '"\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('Clientes exportados'); },
-  importCSV: function() { var input = document.createElement('input'); input.type = 'file'; input.accept = '.csv'; input.onchange = function(e) { var file = e.target.files[0]; var reader = new FileReader(); reader.onload = function(ev) { var lines = ev.target.result.split('\n'); for (var i = 1; i < lines.length; i++) { if (!lines[i].trim()) continue; var parts = lines[i].split(','); if (parts[0]) { var nome = parts[0].replace(/"/g, ''); var cliente = { id: Date.now() + i, nome: nome, cnpj: parts[1] || '', endereco: (parts[2] || '').replace(/"/g, ''), cidade: (parts[3] || '').replace(/"/g, ''), telefone: parts[4] || '', whatsapp: parts[5] || '', email: parts[6] || '', responsavel_nome: parts[7] || '', responsavel_telefone: parts[8] || '', equipamentos: [] }; State.clients.push(cliente); } } Storage.saveClients(); Clientes.renderTable(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file, 'UTF-8'); }; input.click(); }
+  load: function() { State.clients = Storage.loadClients(); this.renderTable(); this.updateStats(); }, 
+  updateStats: function() { var totalClientes = State.clients.length, totalMarcas=0; State.clients.forEach(c=>totalMarcas+=(c.equipamentos||[]).length); var clientesComOS=new Set(), totalOS=0, osAbertas=0, osAprovadas=0; State.osHistory.forEach(os=>{ if(os.cliente) clientesComOS.add(os.cliente); totalOS++; if(os.status==='abertura'||os.status==='execucao'||os.status==='finalizacao') osAbertas++; if(os.status==='aprovada') osAprovadas++; }); $('statTotalClientes').innerText=totalClientes; $('statTotalMarcas').innerText=totalMarcas; $('statClientesComOS').innerText=clientesComOS.size; $('statTotalOSClientes').innerText=totalOS; $('statOSAbertasCliente').innerText=osAbertas; $('statOSAprovadasCliente').innerText=osAprovadas; }, 
+  renderTable: function() { var tbody=$('cad_tableBody'); if(!tbody) return; tbody.innerHTML=''; if(!State.clients || State.clients.length===0){ tbody.innerHTML='<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(c=>{ var row=tbody.insertRow(); var marcasLista=(c.equipamentos||[]).map(eq=>eq.marca).join(', '); row.innerHTML='<td class="p-2 font-medium">'+(c.nome||'')+'</td><td class="p-2">'+(c.cidade||'-')+'</td><td class="p-2">'+(marcasLista||'-')+'</td><td class="p-2"><button onclick="Clientes.select('+c.id+')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit('+c.id+')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete('+c.id+')"></i></td>'; }); }, 
+  addEquipField: function(marca,modelo,serie,qtd,combustivel) { marca=marca||''; modelo=modelo||''; serie=serie||''; qtd=qtd||1; combustivel=combustivel||''; var container=$('equipamentosList'); if(!container) return; var div=document.createElement('div'); div.className='equip-item'; var options=Config.marcas.map(m=>'<option value="'+m+'"'+(marca===m?' selected':'')+'>'+m+'</option>').join(''); div.innerHTML='<select class="form-input w-24 equip-marca">'+options+'<option value="OUTRA">OUTRA</option></select><div class="outra-marca-container" style="display:none"><input type="text" placeholder="Outra marca" class="form-input w-24 outra-marca"></div><input type="text" placeholder="Modelo" class="form-input w-24 equip-modelo" value="'+modelo+'"><input type="text" placeholder="Serie" class="form-input w-24 equip-serie" value="'+serie+'"><input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="'+qtd+'"><select class="form-input w-28 equip-combustivel"><option value="">Combustível</option><option value="eletrico"'+(combustivel==='eletrico'?' selected':'')+'>Elétrico</option><option value="diesel"'+(combustivel==='diesel'?' selected':'')+'>Diesel</option><option value="gasolina"'+(combustivel==='gasolina'?' selected':'')+'>Gasolina</option><option value="glp"'+(combustivel==='glp'?' selected':'')+'>GLP</option></select><button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>'; container.appendChild(div); var select=div.querySelector('.equip-marca'), outraDiv=div.querySelector('.outra-marca-container'); select.addEventListener('change',function(){ outraDiv.style.display=select.value==='OUTRA'?'block':'none'; }); if(marca && Config.marcas.indexOf(marca)===-1){ select.value='OUTRA'; div.querySelector('.outra-marca').value=marca; outraDiv.style.display='block'; } }, 
+  save: async function() { var nome=Utils.getVal('cad_nome').trim(); if(!nome){ showToast('Nome do cliente obrigatório',true); return; } var equipamentos=[]; var container=$('equipamentosList'); if(container){ container.querySelectorAll('.equip-item').forEach(item=>{ var marca=item.querySelector('.equip-marca').value; var outra=item.querySelector('.outra-marca')?item.querySelector('.outra-marca').value:''; equipamentos.push({ marca:marca==='OUTRA'?outra.toUpperCase():marca, modelo:item.querySelector('.equip-modelo').value, serie:item.querySelector('.equip-serie').value, qtd:parseInt(item.querySelector('.equip-qtd').value)||1, combustivel:item.querySelector('.equip-combustivel').value }); }); } var cliente={ id:State.editingClientId||Date.now(), nome:nome, cnpj:Utils.getVal('cad_cnpj'), endereco:Utils.getVal('cad_endereco'), cidade:Utils.getVal('cad_cidade'), telefone:Utils.getVal('cad_telefone'), whatsapp:Utils.getVal('cad_whatsapp'), email:Utils.getVal('cad_email'), responsavel_nome:Utils.getVal('cad_responsavel_nome'), responsavel_telefone:Utils.getVal('cad_responsavel_telefone'), equipamentos:equipamentos }; if(State.editingClientId){ var idx=State.clients.findIndex(c=>c.id===State.editingClientId); if(idx>=0) State.clients[idx]=cliente; State.editingClientId=null; var cancelBtn=$('cad_btnCancelar'); if(cancelBtn) cancelBtn.style.display='none'; } else { State.clients.push(cliente); } Storage.saveClients(); await Cloud.saveClienteToCloud(cliente); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo e sincronizado!'); }, 
+  select: function(id){ var c=State.clients.find(c=>c.id===id); if(!c) return; if(c.equipamentos && c.equipamentos.length>0){ App.mostrarModalEquipamentos(c); } else { Utils.setVal('cliente',c.nome); Utils.setVal('cnpj',c.cnpj); Utils.setVal('cidadeCliente',c.cidade); Utils.setVal('endereco',c.endereco); Utils.setVal('whatsappCliente',c.whatsapp); showToast('Cliente carregado'); var tabOsBtn=document.querySelector('.tab-button[data-tab="tab-os"]'); if(tabOsBtn) tabOsBtn.click(); } }, 
+  edit: function(id){ var c=State.clients.find(c=>c.id===id); if(!c) return; State.editingClientId=id; Utils.setVal('cad_nome',c.nome); Utils.setVal('cad_cnpj',c.cnpj); Utils.setVal('cad_endereco',c.endereco); Utils.setVal('cad_cidade',c.cidade); Utils.setVal('cad_telefone',c.telefone); Utils.setVal('cad_whatsapp',c.whatsapp); Utils.setVal('cad_email',c.email||''); Utils.setVal('cad_responsavel_nome',c.responsavel_nome||''); Utils.setVal('cad_responsavel_telefone',c.responsavel_telefone||''); var container=$('equipamentosList'); if(container) container.innerHTML=''; if(c.equipamentos && c.equipamentos.length) c.equipamentos.forEach(eq=>Clientes.addEquipField(eq.marca,eq.modelo,eq.serie,eq.qtd,eq.combustivel)); var cancelBtn=$('cad_btnCancelar'); if(cancelBtn) cancelBtn.style.display='inline-flex'; showToast('Editando cliente'); }, 
+  delete: async function(id){ if(!confirm('Excluir este cliente?')) return; await Cloud.deleteFromCloud('Clientes','id',id); State.clients=State.clients.filter(c=>c.id!==id); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluido'); }, 
+  cancelEdit: function(){ State.editingClientId=null; this.clearForm(); var cancelBtn=$('cad_btnCancelar'); if(cancelBtn) cancelBtn.style.display='none'; }, 
+  clearForm: function(){ ['cad_nome','cad_cnpj','cad_endereco','cad_cidade','cad_telefone','cad_whatsapp','cad_email','cad_responsavel_nome','cad_responsavel_telefone'].forEach(id=>Utils.setVal(id,'')); var container=$('equipamentosList'); if(container) container.innerHTML=''; }, 
+  exportCSV: function(){ var csv="Nome,CNPJ,Endereco,Cidade,Telefone,WhatsApp,Email,Responsavel,TelefoneResponsavel,Marcas\n"; State.clients.forEach(c=>{ var marcasLista=(c.equipamentos||[]).map(eq=>eq.marca).join('; '); csv+='"'+c.nome+'",'+(c.cnpj||'')+',"'+(c.endereco||'')+'","'+(c.cidade||'')+'",'+(c.telefone||'')+','+(c.whatsapp||'')+','+(c.email||'')+','+(c.responsavel_nome||'')+','+(c.responsavel_telefone||'')+',"'+marcasLista+'"\n'; }); var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='clientes_'+new Date().toISOString().split('T')[0]+'.csv'; a.click(); showToast('Clientes exportados'); }, 
+  importCSV: function(){ var input=document.createElement('input'); input.type='file'; input.accept='.csv'; input.onchange=function(e){ var file=e.target.files[0]; var reader=new FileReader(); reader.onload=async function(ev){ var lines=ev.target.result.split('\n'); for(var i=1;i<lines.length;i++){ if(!lines[i].trim()) continue; var parts=lines[i].split(','); if(parts[0]){ var nome=parts[0].replace(/"/g,''); var cliente={ id:Date.now()+i, nome:nome, cnpj:parts[1]||'', endereco:(parts[2]||'').replace(/"/g,''), cidade:(parts[3]||'').replace(/"/g,''), telefone:parts[4]||'', whatsapp:parts[5]||'', email:parts[6]||'', responsavel_nome:parts[7]||'', responsavel_telefone:parts[8]||'', equipamentos:[] }; await Cloud.saveClienteToCloud(cliente); State.clients.push(cliente); } } Storage.saveClients(); Clientes.renderTable(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file,'UTF-8'); }; input.click(); } 
 };
 
+// ==================== HISTORICO ====================
 var Historico = { 
-  load: function() { State.osHistory = Storage.loadOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); },
-  updateStats: function() { var total = State.osHistory.length; var statusAbertura = 0, statusExecucao = 0, statusFinalizacao = 0, statusFechada = 0, statusAprovada = 0; var tipoEmergencial = 0, tipoPreventiva = 0, tipoCorretiva = 0, tipoGarantia = 0, tipoNormal = 0, tipoAvaliacao = 0, tipoOrcamento = 0; var esteMes = 0; var now = new Date(); var mesAtual = now.getMonth(), anoAtual = now.getFullYear(); State.osHistory.forEach(function(os) { if (os.status === 'abertura') statusAbertura++; else if (os.status === 'execucao') statusExecucao++; else if (os.status === 'finalizacao') statusFinalizacao++; else if (os.status === 'fechada') statusFechada++; else if (os.status === 'aprovada') statusAprovada++; if (os.tipoChamado === 'emergencial') tipoEmergencial++; else if (os.tipoChamado === 'preventiva') tipoPreventiva++; else if (os.tipoChamado === 'corretiva') tipoCorretiva++; else if (os.tipoChamado === 'garantia') tipoGarantia++; else if (os.tipoChamado === 'normal') tipoNormal++; else if (os.tipoChamado === 'avaliacao') tipoAvaliacao++; else if (os.tipoChamado === 'orcamento') tipoOrcamento++; if (os.dataOS) { var d = new Date(os.dataOS); if (d.getMonth() === mesAtual && d.getFullYear() === anoAtual) esteMes++; } }); $('statTotalOS').innerText = total; $('statStatusAbertura').innerText = statusAbertura; $('statStatusExecucao').innerText = statusExecucao; $('statStatusFinalizacao').innerText = statusFinalizacao; $('statStatusFechada').innerText = statusFechada; $('statStatusAprovada').innerText = statusAprovada; $('statTipoEmergencial').innerText = tipoEmergencial; $('statTipoPreventiva').innerText = tipoPreventiva; $('statTipoCorretiva').innerText = tipoCorretiva; $('statTipoGarantia').innerText = tipoGarantia; $('statTipoNormal').innerText = tipoNormal; $('statTipoAvaliacao').innerText = tipoAvaliacao; $('statTipoOrcamento').innerText = tipoOrcamento; $('statEsteMes').innerText = esteMes; },
-  render: function() { var search = Utils.getVal('historicoSearch').toLowerCase(); var tipo = Utils.getVal('historicoFiltroTipo'); var statusFiltro = Utils.getVal('historicoFiltroStatus'); var filtered = State.osHistory.filter(function(os) { var matchSearch = !search || (os.numeroOS && os.numeroOS.toLowerCase().indexOf(search) !== -1) || (os.cliente && os.cliente.toLowerCase().indexOf(search) !== -1); var matchTipo = !tipo || os.tipoChamado === tipo; var matchStatus = !statusFiltro || os.status === statusFiltro; return matchSearch && matchTipo && matchStatus; }); var tbody = $('historicoTableBody'), empty = $('historicoEmpty'); if (!tbody) return; tbody.innerHTML = ''; if (filtered.length === 0) { if (empty) empty.classList.remove('hidden'); return; } if (empty) empty.classList.add('hidden'); filtered.forEach(function(os) { var row = tbody.insertRow(); var statusClass = 'status-' + (os.status || 'abertura'); var statusText = Utils.formatStatus(os.status); row.innerHTML = '<td class="font-mono font-bold">' + (os.numeroOS || '-') + '</td><td class="p-2">' + (os.dataOS || '-') + '</td><td class="font-medium">' + (os.cliente || '-').toUpperCase() + '</td><td class="p-2"><span class="status-badge ' + statusClass + '">' + statusText + '</span></td><td class="font-mono font-bold text-[var(--success)]">' + (os.horasTotais || '-') + '</td><td class="p-2"><button onclick="Historico.view(\'' + os.numeroOS + '\')" class="text-blue-400"><i class="fas fa-eye"></i></button> <button onclick="Historico.edit(\'' + os.numeroOS + '\')" class="text-orange-400 ml-2"><i class="fas fa-edit"></i></button> <button onclick="Historico.delete(\'' + os.numeroOS + '\')" class="text-red-400 ml-2"><i class="fas fa-trash"></i></button></td>'; }); },
-  view: function(num) { var os = State.osHistory.find(function(o) { return o.numeroOS === num; }); if (!os) return; State.currentStatus = os.status || 'abertura'; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') el.value = ''; }); for (var key in os) { if (['fotosBase64','fotoHorimetro','fotosPendencias','assinaturaTecnico','assinaturaCliente'].indexOf(key) === -1) Utils.setVal(key, os[key]); } if (os.fotoHorimetro) { State.fotoHorimetro = os.fotoHorimetro; var preview = $('fotoHorimetroPreview'); if (preview) preview.innerHTML = '<div class="photo-item"><img src="' + os.fotoHorimetro + '"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>'; } else Fotos.removeHorimetro(); if (os.fotosBase64 && os.fotosBase64.length) { State.fotosServico = os.fotosBase64; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; os.fotosBase64.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosServico = []; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; } if (os.fotosPendencias && os.fotosPendencias.length) { State.fotosPendencias = os.fotosPendencias; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; os.fotosPendencias.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosPendencias = []; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; } Signature.loadFromData('tec', os.assinaturaTecnico); Signature.loadFromData('cli', os.assinaturaCliente); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { cb.checked = os[cb.id] === true; }); App.updateUI(); showToast('OS carregada'); var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]'); if (tabOsBtn) tabOsBtn.click(); },
-  edit: function(num) { this.view(num); },
-  delete: function(num) { if (!confirm('Excluir OS ' + num + '?')) return; State.osHistory = State.osHistory.filter(function(o) { return o.numeroOS !== num; }); Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('OS excluída'); },
-  exportCSV: function() { var csv = 'OS,Data,Cliente,Status,Tipo,Horas,Total Geral\n'; State.osHistory.forEach(function(o) { csv += (o.numeroOS || '') + ',' + (o.dataOS || '') + ',"' + (o.cliente || '') + '",' + Utils.formatStatus(o.status) + ',' + (o.tipoChamado || '') + ',' + (o.horasTotais || '') + ',' + (o.totalGeral || '') + '\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'historico_os_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('CSV exportado'); },
-  importCSV: function() { var input = document.createElement('input'); input.type = 'file'; input.accept = '.csv'; input.onchange = function(e) { var file = e.target.files[0]; var reader = new FileReader(); reader.onload = function(ev) { var lines = ev.target.result.split('\n'); for (var i = 1; i < lines.length; i++) { if (!lines[i].trim()) continue; var parts = lines[i].split(','); if (parts[0]) { var os = { numeroOS: parts[0] || 'OS-' + Date.now() + '-' + i, dataOS: parts[1] || '', cliente: (parts[2] || '').replace(/"/g, ''), status: (parts[3] || '').toLowerCase() || 'abertura', tipoChamado: (parts[4] || '').toLowerCase() || 'normal', horasTotais: parts[5] || '0h', totalGeral: parts[6] || '00:00', descricaoServico: '', pecasAplicadas: '', pendencias: '', relatoCliente: '', marca: '', modelo: '', numSerie: '', horimetro: '', combustivel: '', whatsappCliente: '', cnpj: '', cidadeCliente: '', endereco: '', tecnico: 'LEONARDO MARTINS', recebedor: '', fotosBase64: [], fotoHorimetro: null, fotosPendencias: [], assinaturaTecnico: '', assinaturaCliente: '' }; State.osHistory.push(os); } } Storage.saveOSHistory(); Historico.render(); Historico.updateStats(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file, 'UTF-8'); }; input.click(); },
-  clear: function() { if (!confirm('Limpar TODO o histórico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Histórico limpo'); }
+  load: function() { State.osHistory = Storage.loadOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); }, 
+  updateStats: function() { var total=State.osHistory.length, statusAbertura=0,statusExecucao=0,statusFinalizacao=0,statusFechada=0,statusAprovada=0; var tipoEmergencial=0,tipoPreventiva=0,tipoCorretiva=0,tipoGarantia=0,tipoNormal=0,tipoAvaliacao=0,tipoOrcamento=0, esteMes=0; var now=new Date(), mesAtual=now.getMonth(), anoAtual=now.getFullYear(); State.osHistory.forEach(os=>{ if(os.status==='abertura') statusAbertura++; else if(os.status==='execucao') statusExecucao++; else if(os.status==='finalizacao') statusFinalizacao++; else if(os.status==='fechada') statusFechada++; else if(os.status==='aprovada') statusAprovada++; if(os.tipoChamado==='emergencial') tipoEmergencial++; else if(os.tipoChamado==='preventiva') tipoPreventiva++; else if(os.tipoChamado==='corretiva') tipoCorretiva++; else if(os.tipoChamado==='garantia') tipoGarantia++; else if(os.tipoChamado==='normal') tipoNormal++; else if(os.tipoChamado==='avaliacao') tipoAvaliacao++; else if(os.tipoChamado==='orcamento') tipoOrcamento++; if(os.dataOS){ var d=new Date(os.dataOS); if(d.getMonth()===mesAtual && d.getFullYear()===anoAtual) esteMes++; } }); $('statTotalOS').innerText=total; $('statStatusAbertura').innerText=statusAbertura; $('statStatusExecucao').innerText=statusExecucao; $('statStatusFinalizacao').innerText=statusFinalizacao; $('statStatusFechada').innerText=statusFechada; $('statStatusAprovada').innerText=statusAprovada; $('statTipoEmergencial').innerText=tipoEmergencial; $('statTipoPreventiva').innerText=tipoPreventiva; $('statTipoCorretiva').innerText=tipoCorretiva; $('statTipoGarantia').innerText=tipoGarantia; $('statTipoNormal').innerText=tipoNormal; $('statTipoAvaliacao').innerText=tipoAvaliacao; $('statTipoOrcamento').innerText=tipoOrcamento; $('statEsteMes').innerText=esteMes; }, 
+  render: function() { var search=Utils.getVal('historicoSearch').toLowerCase(), tipo=Utils.getVal('historicoFiltroTipo'), statusFiltro=Utils.getVal('historicoFiltroStatus'); var filtered=State.osHistory.filter(os=>{ var matchSearch=!search||(os.numeroOS&&os.numeroOS.toLowerCase().indexOf(search)!==-1)||(os.cliente&&os.cliente.toLowerCase().indexOf(search)!==-1); var matchTipo=!tipo||os.tipoChamado===tipo; var matchStatus=!statusFiltro||os.status===statusFiltro; return matchSearch&&matchTipo&&matchStatus; }); var tbody=$('historicoTableBody'), empty=$('historicoEmpty'); if(!tbody) return; tbody.innerHTML=''; if(filtered.length===0){ if(empty) empty.classList.remove('hidden'); return; } if(empty) empty.classList.add('hidden'); filtered.forEach(os=>{ var row=tbody.insertRow(); var statusClass='status-'+(os.status||'abertura'); var statusText=Utils.formatStatus(os.status); row.innerHTML='<td class="font-mono font-bold">'+(os.numeroOS||'-')+'</td><td class="p-2">'+(os.dataOS||'-')+'</td><td class="font-medium">'+(os.cliente||'-').toUpperCase()+'</td><td class="p-2"><span class="status-badge '+statusClass+'">'+statusText+'</span></td><td class="font-mono font-bold text-[var(--success)]">'+(os.horasTotais||'-')+'</td><td class="p-2"><button onclick="Historico.view(\''+os.numeroOS+'\')" class="text-blue-400"><i class="fas fa-eye"></i></button> <button onclick="Historico.edit(\''+os.numeroOS+'\')" class="text-orange-400 ml-2"><i class="fas fa-edit"></i></button> <button onclick="Historico.delete(\''+os.numeroOS+'\')" class="text-red-400 ml-2"><i class="fas fa-trash"></i></button></td>'; }); }, 
+  view: function(num){ var os=State.osHistory.find(o=>o.numeroOS===num); if(!os) return; State.currentStatus=os.status||'abertura'; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(el=>{ if(el.id&&el.type!=='file') el.value=''; }); for(var key in os){ if(['fotosBase64','fotoHorimetro','fotosPendencias','assinaturaTecnico','assinaturaCliente'].indexOf(key)===-1) Utils.setVal(key,os[key]); } if(os.fotoHorimetro){ State.fotoHorimetro=os.fotoHorimetro; var preview=$('fotoHorimetroPreview'); if(preview) preview.innerHTML='<div class="photo-item"><img src="'+os.fotoHorimetro+'"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>'; } else Fotos.removeHorimetro(); if(os.fotosBase64&&os.fotosBase64.length){ State.fotosServico=os.fotosBase64; var preview=$('fotosPreview'); if(preview) preview.innerHTML=''; os.fotosBase64.forEach(src=>{ if(preview){ var div=document.createElement('div'); div.className='photo-item'; div.innerHTML='<img src="'+src+'"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>'; preview.appendChild(div); } }); } else{ State.fotosServico=[]; var preview=$('fotosPreview'); if(preview) preview.innerHTML=''; } if(os.fotosPendencias&&os.fotosPendencias.length){ State.fotosPendencias=os.fotosPendencias; var preview=$('fotosPendenciasPreview'); if(preview) preview.innerHTML=''; os.fotosPendencias.forEach(src=>{ if(preview){ var div=document.createElement('div'); div.className='photo-item'; div.innerHTML='<img src="'+src+'"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>'; preview.appendChild(div); } }); } else{ State.fotosPendencias=[]; var preview=$('fotosPendenciasPreview'); if(preview) preview.innerHTML=''; } Signature.loadFromData('tec',os.assinaturaTecnico); Signature.loadFromData('cli',os.assinaturaCliente); document.querySelectorAll('input[data-check="true"]').forEach(cb=>{ cb.checked=os[cb.id]===true; }); App.updateUI(); showToast('OS carregada'); var tabOsBtn=document.querySelector('.tab-button[data-tab="tab-os"]'); if(tabOsBtn) tabOsBtn.click(); }, 
+  edit: function(num){ this.view(num); }, 
+  delete: async function(num){ if(!confirm('Excluir OS '+num+'?')) return; await Cloud.deleteFromCloud('OS','numeroOS',num); State.osHistory=State.osHistory.filter(o=>o.numeroOS!==num); Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('OS excluida'); }, 
+  exportCSV: function(){ var csv='OS,Data,Cliente,Status,Tipo,Horas,Total Geral\n'; State.osHistory.forEach(o=>{ csv+=(o.numeroOS||'')+','+(o.dataOS||'')+',"'+(o.cliente||'')+'",'+Utils.formatStatus(o.status)+','+(o.tipoChamado||'')+','+(o.horasTotais||'')+','+(o.totalGeral||'')+'\n'; }); var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='historico_os_'+new Date().toISOString().split('T')[0]+'.csv'; a.click(); showToast('CSV exportado'); }, 
+  importCSV: function(){ var input=document.createElement('input'); input.type='file'; input.accept='.csv'; input.onchange=function(e){ var file=e.target.files[0]; var reader=new FileReader(); reader.onload=async function(ev){ var lines=ev.target.result.split('\n'); for(var i=1;i<lines.length;i++){ if(!lines[i].trim()) continue; var parts=lines[i].split(','); if(parts[0]){ var os={ numeroOS:parts[0]||'OS-'+Date.now()+'-'+i, dataOS:parts[1]||'', cliente:(parts[2]||'').replace(/"/g,''), status:(parts[3]||'').toLowerCase()||'abertura', tipoChamado:(parts[4]||'').toLowerCase()||'normal', horasTotais:parts[5]||'0h', totalGeral:parts[6]||'00:00', descricaoServico:'', pecasAplicadas:'', pendencias:'', relatoCliente:'', marca:'', modelo:'', numSerie:'', horimetro:'', combustivel:'', whatsappCliente:'', cnpj:'', cidadeCliente:'', endereco:'', tecnico:'LEONARDO MARTINS', recebedor:'', fotosBase64:[], fotoHorimetro:null, fotosPendencias:[], assinaturaTecnico:'', assinaturaCliente:'' }; await Cloud.saveOSToCloud(os); State.osHistory.push(os); } } Storage.saveOSHistory(); Historico.render(); Historico.updateStats(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file,'UTF-8'); }; input.click(); }, 
+  clear: function(){ if(!confirm('Limpar TODO o historico?')) return; State.osHistory=[]; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Historico limpo'); } 
 };
 
+// ==================== APP ====================
 var App = { 
-  init: function() { 
-    try { 
-      Storage.loadCounter(); 
-      Clientes.load(); 
-      Historico.load(); 
-      this.populateMarcas(); 
-      Checklist.render(); 
-      Signature.init(); 
-      Fotos.init(); 
-      Horas.initListeners(); 
-      Utils.setDefaultDate(); 
-      this.setupTabs(); 
-      this.setupMarcaSelect(); 
-      this.setupSearch(); 
-      State.currentStatus = 'abertura'; 
-      this.updateUI(); 
-      var loading = $('loadingOverlay'); 
-      if (loading) loading.style.display = 'none'; 
-      var container = $('appContainer'); 
-      if (container) container.style.display = 'block'; 
-    } catch (e) { 
-      console.error(e); 
-      var loading = $('loadingOverlay'); 
-      if (loading) loading.innerHTML = '<div class="text-center"><i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i><p class="text-red-400">Erro ao carregar</p><button onclick="location.reload()" class="btn btn-primary mt-4">Recarregar</button></div>'; 
-    } 
-  },
-  mostrarModalEquipamentos: function(cliente) {
-    var modal = $('equipModal');
-    var equipList = $('equipList');
-    equipList.innerHTML = '';
-    cliente.equipamentos.forEach(function(eq, idx) {
-      var div = document.createElement('div');
-      div.className = 'equip-option';
-      div.innerHTML = '<div><strong><i class="fas fa-forklift"></i> ' + eq.marca + ' ' + eq.modelo + '</strong></div>' +
-        '<div class="text-sm text-[var(--muted)]">Série: ' + (eq.serie || 'N/A') + ' | Qtd: ' + eq.qtd + ' | Combustível: ' + (eq.combustivel || 'N/A') + '</div>';
-      div.onclick = function() {
-        App.carregarEquipamento(eq, cliente);
-        modal.style.display = 'none';
-      };
-      equipList.appendChild(div);
-    });
-    modal.style.display = 'flex';
-  },
-  carregarEquipamento: function(equip, cliente) {
-    Utils.setVal('cliente', cliente.nome);
-    Utils.setVal('cnpj', cliente.cnpj);
-    Utils.setVal('cidadeCliente', cliente.cidade);
-    Utils.setVal('endereco', cliente.endereco);
-    Utils.setVal('whatsappCliente', cliente.whatsapp);
-    var selectMarca = $('marcaSelect');
-    if (selectMarca) {
-      if (Config.marcas.indexOf(equip.marca) !== -1) {
-        selectMarca.value = equip.marca;
-        var outraDiv = $('marcaOutraDiv');
-        if (outraDiv) outraDiv.style.display = 'none';
-      } else if (equip.marca) {
-        selectMarca.value = 'OUTRA';
-        Utils.setVal('marcaOutra', equip.marca);
-        var outraDiv = $('marcaOutraDiv');
-        if (outraDiv) outraDiv.style.display = 'block';
-      }
-    }
-    Utils.setVal('modelo', equip.modelo);
-    Utils.setVal('numSerie', equip.serie);
-    if (equip.combustivel) Utils.setVal('combustivel', equip.combustivel);
-    showToast('Equipamento carregado: ' + equip.marca + ' ' + equip.modelo);
-    var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]');
-    if (tabOsBtn) tabOsBtn.click();
-  },
-  fecharModalEquip: function() { $('equipModal').style.display = 'none'; },
-  populateMarcas: function() { var select = $('marcaSelect'); if (!select) return; select.innerHTML = '<option value="">Selecione</option>'; Config.marcas.forEach(function(m) { select.innerHTML += '<option value="' + m + '">' + m + '</option>'; }); },
-  setupMarcaSelect: function() { var select = $('marcaSelect'), div = $('marcaOutraDiv'), input = $('marcaOutra'); if (!select || !div || !input) return; select.addEventListener('change', function() { div.style.display = select.value === 'OUTRA' ? 'block' : 'none'; if (select.value === 'OUTRA') input.focus(); Utils.setVal('marca', select.value === 'OUTRA' ? input.value.toUpperCase() : select.value); }); input.addEventListener('input', function() { Utils.setVal('marca', input.value.toUpperCase()); }); },
-  setupTabs: function() { var tabs = document.querySelectorAll('.tab-button'); var contents = document.querySelectorAll('.tab-content'); tabs.forEach(function(tab) { tab.addEventListener('click', function() { var targetId = this.getAttribute('data-tab'); if (!targetId) return; tabs.forEach(function(t) { t.classList.remove('active'); }); contents.forEach(function(c) { c.classList.remove('active'); }); this.classList.add('active'); var target = document.getElementById(targetId); if (target) target.classList.add('active'); }); }); },
-  setupSearch: function() { var histSearch = $('historicoSearch'); if (histSearch) histSearch.addEventListener('input', function() { Historico.render(); }); var tipoFiltro = $('historicoFiltroTipo'); if (tipoFiltro) tipoFiltro.addEventListener('change', function() { Historico.render(); }); var statusFiltro = $('historicoFiltroStatus'); if (statusFiltro) statusFiltro.addEventListener('change', function() { Historico.render(); }); var searchInput = $('cad_searchInput'); if (searchInput) { searchInput.addEventListener('input', function(e) { var search = e.target.value.toLowerCase(); var filtered = State.clients.filter(function(c) { return c.nome.toLowerCase().indexOf(search) !== -1 || (c.cidade && c.cidade.toLowerCase().indexOf(search) !== -1); }); var original = State.clients; State.clients = filtered; Clientes.renderTable(); State.clients = original; }); } },
-  updateUI: function() { var isAbertura = State.currentStatus === 'abertura'; var isExecucao = State.currentStatus === 'execucao'; var isFinalizacao = State.currentStatus === 'finalizacao'; var isFechada = State.currentStatus === 'fechada'; var isAprovada = State.currentStatus === 'aprovada'; var btnIniciar = $('btnIniciarExecucao'); if (btnIniciar) btnIniciar.disabled = !isAbertura; var btnFinalizar = $('btnFinalizar'); if (btnFinalizar) btnFinalizar.disabled = !isExecucao; var btnFechar = $('btnFecharOS'); if (btnFechar) btnFechar.disabled = !isFinalizacao; var btnAprovar = $('btnAprovar'); if (btnAprovar) btnAprovar.disabled = !isFechada; var btnPDF = $('btnPreviaPDF'); var btnEmail = $('btnEnviarEmail'); if (btnPDF) btnPDF.disabled = !isAprovada; if (btnEmail) btnEmail.disabled = !isAprovada; var editFields = ['descricaoServico','pecasAplicadas','pendencias','horasExtras','adicionalNoturno','modelo','numSerie','horimetro']; editFields.forEach(function(id) { var el = $(id); if (el) el.disabled = isFechada || isAprovada; }); var marcaSelect = $('marcaSelect'); if (marcaSelect) marcaSelect.disabled = isFechada || isAprovada; var badge = $('statusBadge'); if (badge) { badge.className = 'status-badge'; var statusConfig = { abertura: {text:'EM ABERTURA', class:'status-abertura'}, execucao: {text:'EM EXECUCAO', class:'status-execucao'}, finalizacao: {text:'FINALIZANDO', class:'status-finalizacao'}, fechada: {text:'FECHADA', class:'status-fechada'}, aprovada: {text:'APROVADA', class:'status-aprovada'} }; var cfg = statusConfig[State.currentStatus]; badge.textContent = cfg.text; badge.classList.add(cfg.class); } var steps = ['abertura','execucao','finalizacao','fechada','aprovada']; document.querySelectorAll('.step').forEach(function(step, idx) { step.classList.remove('active','completed','locked'); if (steps[idx] === State.currentStatus) step.classList.add('active'); else if (steps.indexOf(State.currentStatus) > idx) step.classList.add(steps[idx] === 'fechada' && State.currentStatus === 'aprovada' ? 'locked' : 'completed'); }); },
-  coletarDados: function() { var data = {}; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') data[el.id] = el.value; }); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { data[cb.id] = cb.checked; }); document.querySelectorAll('#checklistSections select').forEach(function(sel) { data[sel.id] = sel.value; }); var marcaSelect = $('marcaSelect').value, marcaOutra = $('marcaOutra').value; data.marca = marcaSelect === 'OUTRA' ? marcaOutra.toUpperCase() : marcaSelect; return data; },
-  salvar: function() { Signature.save('tec'); Signature.save('cli'); var data = this.coletarDados(); data.status = State.currentStatus; data.fotosBase64 = State.fotosServico; data.fotoHorimetro = State.fotoHorimetro; data.fotosPendencias = State.fotosPendencias; data.assinaturaTecnico = Utils.getVal('assinaturaTecnicoData'); data.assinaturaCliente = Utils.getVal('assinaturaClienteData'); Horas.calcular(); data.horasTotais = Utils.getVal('horasTotais'); data.totalGeral = Utils.getVal('totalGeral'); if (!data.numeroOS) { data.numeroOS = Utils.generateOSNumber(); } try { var idx = State.osHistory.findIndex(function(os) { return os.numeroOS === data.numeroOS; }); if (idx >= 0) { State.osHistory[idx] = data; } else { State.osHistory.unshift(data); } Storage.saveOSHistory(); State.hasUnsavedChanges = false; Historico.updateStats(); Clientes.updateStats(); return true; } catch (e) { showToast('Erro ao salvar', true); return false; } },
-  salvarOSManual: function() { var ok = this.salvar(); if (ok) { showToast('OS salva com sucesso'); Historico.render(); } },
-  mudarStatus: function(novoStatus) { 
-    if (novoStatus === 'abertura') { if (!Utils.getVal('numeroOS')) { showToast('Clique em Nova OS primeiro.', true); return; } if (!Utils.getVal('cliente').trim()) { showToast('Cliente obrigatório para abrir a OS.', true); return; } } 
-    if (novoStatus === 'execucao' && State.currentStatus !== 'abertura') { showToast('A OS precisa estar EM ABERTURA para iniciar execução.', true); return; } 
-    if (novoStatus === 'finalizacao' && State.currentStatus !== 'execucao') { showToast('A OS precisa estar EM EXECUÇÃO para finalizar.', true); return; } 
-    if (novoStatus === 'fechada' && State.currentStatus !== 'finalizacao') { showToast('A OS precisa estar FINALIZANDO para ser fechada.', true); return; } 
-    if (novoStatus === 'aprovada') { if (State.currentStatus !== 'fechada') { showToast('A OS precisa estar FECHADA para aprovação.', true); return; } if (!Utils.getVal('assinaturaClienteData')) { showToast('O cliente deve assinar digitalmente.', true); return; } if (!Utils.getVal('recebedor').trim()) { showToast('Informe o nome do recebedor.', true); return; } } 
-    State.currentStatus = novoStatus; 
-    if (novoStatus === 'finalizacao' || novoStatus === 'fechada') Horas.calcular(); 
-    var ok = this.salvar(); 
-    if (ok) { this.updateUI(); Historico.render(); showToast('Status: ' + Utils.formatStatus(novoStatus)); } 
-  },
-  iniciarExecucao: function() { if (State.currentStatus !== 'abertura') return; this.mudarStatus('execucao'); Timer.control('start'); showToast('Execução iniciada'); },
-  finalizarServico: function() { if (State.currentStatus !== 'execucao') return; var horimetro = Utils.getVal('horimetro'); if (!horimetro) { showToast('Preencha o campo Horímetro antes de finalizar o serviço.', true); return; } Timer.control('stop'); Horas.calcular(); this.mudarStatus('finalizacao'); showToast('Serviço finalizado'); },
-  fecharOS: function() { if (State.currentStatus !== 'finalizacao') return; var descricao = Utils.getVal('descricaoServico').trim(); if (!descricao) { showToast('Descreva o serviço realizado antes de fechar a OS.', true); return; } var horimetro = Utils.getVal('horimetro'); if (!horimetro) { showToast('Campo Horímetro obrigatório.', true); return; } Horas.calcular(); if (!confirm('Fechar esta OS? Após fechada, os dados não poderão ser alterados.')) return; this.mudarStatus('fechada'); showToast('OS fechada'); },
-  novaOS: function() { if (State.hasUnsavedChanges && !confirm('Há alterações não salvas. Criar nova OS?')) return; State.currentStatus = 'abertura'; State.fotosServico = []; State.fotoHorimetro = null; State.fotosPendencias = []; State.hasUnsavedChanges = false; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') { el.value = ''; } }); Utils.setDefaultDate(); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { cb.checked = false; }); Checklist.updateProgress(); var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; var previewH = $('fotoHorimetroPreview'); if (previewH) previewH.innerHTML = ''; var previewP = $('fotosPendenciasPreview'); if (previewP) previewP.innerHTML = ''; $('fotosServico').value = ''; $('fotoHorimetroInput').value = ''; $('fotosPendenciasInput').value = ''; Signature.clear('tec'); Signature.clear('cli'); Timer.reset(); Timer.seconds = 0; Timer.running = false; Timer.paused = false; if (Timer.interval) clearInterval(Timer.interval); Utils.generateOSNumber(); this.updateUI(); showToast('Nova OS criada'); var tabClientesBtn = document.querySelector('.tab-button[data-tab="tab-clientes"]'); if (tabClientesBtn) tabClientesBtn.click(); },
-  getResumoEmail: function() { var tipoChamado = Utils.getVal('tipoChamado') || 'normal'; var tipoChamadoFormatado = Utils.formatTipoChamado(tipoChamado); var statusTexto = Utils.formatStatus(State.currentStatus); var horasTotais = Utils.getVal('horasTotais') || '0h'; var marca = Utils.getVal('marca') || 'Não informada'; var modelo = Utils.getVal('modelo') || 'Não informado'; var descricao = Utils.getVal('descricaoServico') || 'Não informado'; var pecas = Utils.getVal('pecasAplicadas') || 'Nenhuma peça informada'; var pendencias = Utils.getVal('pendencias') || 'Nenhuma pendência informada'; var relato = Utils.getVal('relatoCliente') || 'Não informado'; var clienteNome = Utils.getVal('cliente'); var clienteEncontrado = State.clients.find(function(c) { return c.nome === clienteNome; }); var emailCliente = clienteEncontrado ? clienteEncontrado.email : ''; var responsavelNome = clienteEncontrado ? clienteEncontrado.responsavel_nome : ''; var cnpjCliente = Utils.getVal('cnpj') || (clienteEncontrado ? clienteEncontrado.cnpj : ''); var dataOS = Utils.getVal('dataOS') || new Date().toLocaleDateString('pt-BR'); var numeroOS = Utils.getVal('numeroOS') || 'OS-' + Date.now(); var resumo = '🏭 *MARLIFT EMPILHADEIRAS*\n'; resumo += '━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━\n'; resumo += '📋 *OS:* ' + numeroOS + '\n'; resumo += '📅 *Data:* ' + dataOS + '\n'; resumo += '👤 *Cliente:* ' + clienteNome + '\n'; if (cnpjCliente) resumo += '🏭 *CNPJ/CPF:* ' + cnpjCliente + '\n'; if (emailCliente) resumo += '📧 *E-mail:* ' + emailCliente + '\n'; if (responsavelNome) resumo += '👨‍💼 *Responsável:* ' + responsavelNome + '\n'; resumo += '🔧 *Empilhadeira:* ' + marca + ' ' + modelo + '\n'; resumo += '⏱️ *Tempo de Serviço:* ' + horasTotais + '\n'; resumo += '✅ *Status:* ' + statusTexto + '\n'; resumo += '📄 *Tipo de Chamado:* ' + tipoChamadoFormatado + '\n'; resumo += '🗣️ *Relato do Cliente:*\n' + relato + '\n\n'; resumo += '📝 *Serviço Realizado:*\n' + descricao + '\n\n'; if (pecas && pecas !== 'Nenhuma peça informada') { resumo += '🔩 *Peças Aplicadas:*\n' + pecas + '\n\n'; } if (pendencias && pendencias !== 'Nenhuma pendência informada') { resumo += '⚠️ *Pendências:*\n' + pendencias + '\n\n'; } resumo += '━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━\n'; resumo += '📱 *MARLIFT Empilhadeiras*\n'; resumo += '🏭 *Excelência em Movimento*'; return resumo; },
-  enviarEmailComResumo: function() { if (State.currentStatus !== 'aprovada') { showToast('Somente OS aprovadas podem ser enviadas por e-mail.', true); return; } var clienteNome = Utils.getVal('cliente'); var clienteEncontrado = State.clients.find(function(c) { return c.nome === clienteNome; }); var emailCliente = clienteEncontrado ? clienteEncontrado.email : ''; if (!emailCliente) { var emailDigitado = prompt('Cliente não possui e-mail cadastrado. Digite o e-mail para envio:', ''); if (!emailDigitado || !emailDigitado.includes('@')) { showToast('E-mail inválido!', true); return; } emailCliente = emailDigitado; } var assunto = 'MARLIFT - Relatório da Ordem de Serviço ' + Utils.getVal('numeroOS'); var corpo = this.getResumoEmail(); var mailtoLink = 'mailto:' + encodeURIComponent(emailCliente) + '?subject=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo); window.location.href = mailtoLink; showToast('Abrindo cliente de e-mail com o resumo da OS'); },
-  gerarPreviaPDF: function() { if (State.currentStatus !== 'aprovada') { showToast('Somente OS aprovadas geram PDF.', true); return; } var html = this.gerarRelatorioHTML(); var win = window.open(); win.document.write(html); win.document.close(); setTimeout(function() { win.print(); }, 500); },
-  gerarRelatorioHTML: function() { var tipoChamado = Utils.getVal('tipoChamado') || 'normal'; var tipoChamadoFormatado = Utils.formatTipoChamado(tipoChamado); var endereco = Utils.getVal('endereco'); var mapaLink = endereco ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(endereco) : '#'; var mapaHtml = endereco ? '<div style="margin-top:8px;"><a href="' + mapaLink + '" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:#f97316; color:white; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:bold;">📍 Ver localização no Google Maps</a></div>' : ''; var fotosHtml = State.fotosServico.length ? '<div style="margin-top:20px;"><h3>📸 Registro Fotográfico do Serviço</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">' + State.fotosServico.map(function(src) { return '<img src="' + src + '" style="max-width:200px;max-height:200px;border-radius:8px;border:1px solid #ccc;">'; }).join('') + '</div></div>' : ''; var fotosPendHtml = State.fotosPendencias.length ? '<div style="margin-top:20px;"><h3>⚠️ Registro Fotográfico das Pendências</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">' + State.fotosPendencias.map(function(src) { return '<img src="' + src + '" style="max-width:200px;max-height:200px;border-radius:8px;border:1px solid #ccc;">'; }).join('') + '</div></div>' : ''; var horimetroImg = State.fotoHorimetro ? '<div><h3>📊 Horímetro</h3><img src="' + State.fotoHorimetro + '" style="max-width:180px;border:1px solid #ccc;border-radius:8px;"></div>' : ''; var checklistItems = []; document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { if (cb.checked) checklistItems.push(cb.parentElement.innerText.trim()); }); var checklistHtml = checklistItems.length ? '<div><h3>✅ Itens Verificados</h3><ul>' + checklistItems.map(function(i) { return '<li>' + i + '</li>'; }).join('') + '</ul></div>' : ''; var clienteNome = Utils.getVal('cliente'); var clienteEncontrado = State.clients.find(function(c) { return c.nome === clienteNome; }); var emailCliente = clienteEncontrado ? (clienteEncontrado.email || 'Não informado') : 'Não informado'; var responsavelNome = clienteEncontrado ? (clienteEncontrado.responsavel_nome || 'Não informado') : 'Não informado'; var responsavelTelefone = clienteEncontrado ? (clienteEncontrado.responsavel_telefone || 'Não informado') : 'Não informado'; var horasCobradas = Utils.getVal('horasTotais') || '0h'; var horasExtras = Utils.getVal('horasExtras') || '00:00'; var adicionalNoturno = Utils.getVal('adicionalNoturno') || '00:00'; var totalGeral = Utils.getVal('totalGeral') || '00:00'; return '<!DOCTYPE html><html><head><title>Relatorio_' + Utils.getVal('numeroOS') + '</title><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:30px;max-width:900px;margin:auto;color:#1e293b;}h1{color:#f97316;margin-bottom:5px;font-size:28px;}h2{color:#374151;margin-top:25px;font-size:20px;}h3{color:#4b5563;margin-top:15px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;}.header{border-bottom:2px solid #f97316;margin-bottom:20px;padding-bottom:15px;text-align:center;}.logo-area{display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:10px;}.logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:15px;display:flex;align-items:center;justify-content:center;}.logo-icon svg{width:40px;height:40px;color:white;}.footer{margin-top:40px;font-size:10px;text-align:center;border-top:1px solid #ccc;padding-top:15px;color:#6b7280;}.assinatura-img{max-width:200px;max-height:80px;border:1px solid #ddd;border-radius:8px;}.section{margin-bottom:20px;}p{margin:5px 0;}.status-aprovada{background:#22c55e20;color:#16a34a;padding:5px 12px;border-radius:20px;font-weight:bold;display:inline-block;}.info-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:10px;gap:10px;}.cliente-linha{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #f97316;}.equip-linha{background:#f1f5f9;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #10b981;}.horas-linha{background:#f1f5f9;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #10b981;display:flex;flex-wrap:wrap;justify-content:space-around;text-align:center;}.horas-item{flex:1;min-width:120px;}</style></head><body><div class="header"><div class="logo-area"><div class="logo-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1>MARLIFT EMPILHADEIRAS</h1><p style="margin:0;">Excelência em Movimento</p></div></div><h2>RELATÓRIO FINAL - OS ' + Utils.getVal('numeroOS') + '</h2><p><strong>Data de Emissão:</strong> ' + new Date().toLocaleString('pt-BR') + '</p><div class="info-row"><span class="status-aprovada">✅ APROVADA PELO CLIENTE</span> <span style="background:#f9731620; color:#f97316; padding:5px 12px; border-radius:20px; font-weight:bold;">📋 TIPO: ' + tipoChamadoFormatado + '</span></div></div><div class="section"><h3>📋 Dados do Cliente</h3><div class="cliente-linha"><strong>👤 Cliente:</strong> ' + Utils.getVal('cliente') + '  |  <strong>📄 CNPJ/CPF:</strong> ' + Utils.getVal('cnpj') + '</div><div><strong>📧 E-mail:</strong> ' + emailCliente + '</div><div><strong>👨‍💼 Responsável:</strong> ' + responsavelNome + '  |  <strong>📞 Telefone:</strong> ' + responsavelTelefone + '</div><div><strong>📍 Endereço:</strong> ' + Utils.getVal('endereco') + ' - ' + Utils.getVal('cidadeCliente') + '</div>' + mapaHtml + '</div><div class="section"><h3>🏗️ Equipamento</h3><div class="equip-linha"><strong>🔧 Marca:</strong> ' + Utils.getVal('marca') + '  |  <strong>📐 Modelo:</strong> ' + Utils.getVal('modelo') + '  |  <strong>🔢 Nº Série:</strong> ' + Utils.getVal('numSerie') + '  |  <strong>⏱️ Horímetro:</strong> ' + Utils.getVal('horimetro') + 'h</div>' + horimetroImg + '</div><div class="section"><h3>🔧 Serviço Executado</h3><p><strong>Diagnóstico:</strong><br>' + (Utils.getVal('descricaoServico') || '').replace(/\n/g, '<br>') + '</p><p><strong>Peças Aplicadas:</strong><br>' + (Utils.getVal('pecasAplicadas') || '').replace(/\n/g, '<br>') + '</p><p><strong>Pendências:</strong><br>' + (Utils.getVal('pendencias') || '').replace(/\n/g, '<br>') + '</p></div>' + checklistHtml + fotosHtml + fotosPendHtml + '<div class="section"><h3>⏱️ Horas Trabalhadas</h3><div class="horas-linha"><div class="horas-item"><strong>Horas Cobradas</strong><br><span style="font-size:1.3em; color:#16a34a;">' + horasCobradas + '</span></div><div class="horas-item"><strong>Horas Extras</strong><br>' + horasExtras + '</div><div class="horas-item"><strong>Adicional Noturno</strong><br>' + adicionalNoturno + '</div><div class="horas-item"><strong>TOTAL GERAL</strong><br><span style="font-size:1.3em; color:#16a34a; font-weight:bold;">' + totalGeral + '</span></div></div></div><div class="section"><h3>✍️ Assinaturas de Aprovação</h3><div style="display:flex;gap:60px;margin-top:15px;flex-wrap:wrap;"><div><strong>Técnico:</strong> ' + Utils.getVal('tecnico') + '<br>' + (Utils.getVal('assinaturaTecnicoData') ? '<img src="' + Utils.getVal('assinaturaTecnicoData') + '" class="assinatura-img">' : '<p style="color:#999;">Não assinado</p>') + '</div><div><strong>Cliente:</strong> ' + Utils.getVal('recebedor') + '<br>' + (Utils.getVal('assinaturaClienteData') ? '<img src="' + Utils.getVal('assinaturaClienteData') + '" class="assinatura-img">' : '<p style="color:#999;">Não assinado</p>') + '</div></div></div><div class="footer">Documento gerado eletronicamente - MARLIFT Empilhadeiras<br>Este documento é válido como comprovante de serviço prestado.</div></body></html>'; },
-  abrirMapa: function() { var end = Utils.getVal('endereco'); if (end) window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(end)); else showToast('Informe o endereço primeiro.', true); },
-  sendWhatsAppMessage: function() { var numero = prompt('WhatsApp com DDD:', Utils.getVal('whatsappCliente')); if (!numero) return; var msg = this.getResumoEmail(); window.open('https://wa.me/' + numero.replace(/\D/g, '') + '?text=' + encodeURIComponent(msg)); }
+  init: async function(){ try { Storage.loadCounter(); Clientes.load(); Historico.load(); this.populateMarcas(); Checklist.render(); Signature.init(); Fotos.init(); Horas.initListeners(); Utils.setDefaultDate(); this.setupTabs(); this.setupMarcaSelect(); this.setupSearch(); State.currentStatus='abertura'; this.updateUI(); var loading=$('loadingOverlay'); if(loading) loading.style.display='none'; var container=$('appContainer'); if(container) container.style.display='block'; Cloud.monitorConnection(); await Cloud.syncAll(); } catch(e){ console.error(e); var loading=$('loadingOverlay'); if(loading) loading.innerHTML='<div class="text-center"><i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i><p class="text-red-400">Erro ao carregar</p><button onclick="location.reload()" class="btn btn-primary mt-4">Recarregar</button></div>'; } }, 
+  mostrarModalEquipamentos: function(cliente){ var modal=$('equipModal'), equipList=$('equipList'); equipList.innerHTML=''; cliente.equipamentos.forEach(eq=>{ var div=document.createElement('div'); div.className='equip-option'; div.innerHTML='<div><strong><i class="fas fa-forklift"></i> '+eq.marca+' '+eq.modelo+'</strong></div><div class="text-sm text-[var(--muted)]">Série: '+(eq.serie||'N/A')+' | Qtd: '+eq.qtd+' | Combustível: '+(eq.combustivel||'N/A')+'</div>'; div.onclick=function(){ App.carregarEquipamento(eq,cliente); modal.style.display='none'; }; equipList.appendChild(div); }); modal.style.display='flex'; }, 
+  carregarEquipamento: function(equip,cliente){ Utils.setVal('cliente',cliente.nome); Utils.setVal('cnpj',cliente.cnpj); Utils.setVal('cidadeCliente',cliente.cidade); Utils.setVal('endereco',cliente.endereco); Utils.setVal('whatsappCliente',cliente.whatsapp); var selectMarca=$('marcaSelect'); if(selectMarca){ if(Config.marcas.indexOf(equip.marca)!==-1){ selectMarca.value=equip.marca; var outraDiv=$('marcaOutraDiv'); if(outraDiv) outraDiv.style.display='none'; } else if(equip.marca){ selectMarca.value='OUTRA'; Utils.setVal('marcaOutra',equip.marca); var outraDiv=$('marcaOutraDiv'); if(outraDiv) outraDiv.style.display='block'; } } Utils.setVal('modelo',equip.modelo); Utils.setVal('numSerie',equip.serie); if(equip.combustivel) Utils.setVal('combustivel',equip.combustivel); showToast('Equipamento carregado: '+equip.marca+' '+equip.modelo); var tabOsBtn=document.querySelector('.tab-button[data-tab="tab-os"]'); if(tabOsBtn) tabOsBtn.click(); }, 
+  fecharModalEquip: function(){ $('equipModal').style.display='none'; }, 
+  populateMarcas: function(){ var select=$('marcaSelect'); if(!select) return; select.innerHTML='<option value="">Selecione</option>'; Config.marcas.forEach(m=>{ select.innerHTML+='<option value="'+m+'">'+m+'</option>'; }); }, 
+  setupMarcaSelect: function(){ var select=$('marcaSelect'), div=$('marcaOutraDiv'), input=$('marcaOutra'); if(!select||!div||!input) return; select.addEventListener('change',function(){ div.style.display=select.value==='OUTRA'?'block':'none'; if(select.value==='OUTRA') input.focus(); Utils.setVal('marca',select.value==='OUTRA'?input.value.toUpperCase():select.value); }); input.addEventListener('input',function(){ Utils.setVal('marca',input.value.toUpperCase()); }); }, 
+  setupTabs: function(){ var tabs=document.querySelectorAll('.tab-button'), contents=document.querySelectorAll('.tab-content'); tabs.forEach(tab=>{ tab.addEventListener('click',function(){ var targetId=this.getAttribute('data-tab'); if(!targetId) return; tabs.forEach(t=>t.classList.remove('active')); contents.forEach(c=>c.classList.remove('active')); this.classList.add('active'); var target=document.getElementById(targetId); if(target) target.classList.add('active'); }); }); }, 
+  setupSearch: function(){ var histSearch=$('historicoSearch'); if(histSearch) histSearch.addEventListener('input',function(){ Historico.render(); }); var tipoFiltro=$('historicoFiltroTipo'); if(tipoFiltro) tipoFiltro.addEventListener('change',function(){ Historico.render(); }); var statusFiltro=$('historicoFiltroStatus'); if(statusFiltro) statusFiltro.addEventListener('change',function(){ Historico.render(); }); var searchInput=$('cad_searchInput'); if(searchInput){ searchInput.addEventListener('input',function(e){ var search=e.target.value.toLowerCase(); var filtered=State.clients.filter(c=>c.nome.toLowerCase().indexOf(search)!==-1||(c.cidade&&c.cidade.toLowerCase().indexOf(search)!==-1)); var original=State.clients; State.clients=filtered; Clientes.renderTable(); State.clients=original; }); } }, 
+  updateUI: function(){ var isAbertura=State.currentStatus==='abertura', isExecucao=State.currentStatus==='execucao', isFinalizacao=State.currentStatus==='finalizacao', isFechada=State.currentStatus==='fechada', isAprovada=State.currentStatus==='aprovada'; var btnIniciar=$('btnIniciarExecucao'); if(btnIniciar) btnIniciar.disabled=!isAbertura; var btnFinalizar=$('btnFinalizar'); if(btnFinalizar) btnFinalizar.disabled=!isExecucao; var btnFechar=$('btnFecharOS'); if(btnFechar) btnFechar.disabled=!isFinalizacao; var btnAprovar=$('btnAprovar'); if(btnAprovar) btnAprovar.disabled=!isFechada; var btnPDF=$('btnPreviaPDF'), btnEmail=$('btnEnviarEmail'); if(btnPDF) btnPDF.disabled=!isAprovada; if(btnEmail) btnEmail.disabled=!isAprovada; var editFields=['descricaoServico','pecasAplicadas','pendencias','horasExtras','adicionalNoturno','modelo','numSerie','horimetro']; editFields.forEach(id=>{ var el=$(id); if(el) el.disabled=isFechada||isAprovada; }); var marcaSelect=$('marcaSelect'); if(marcaSelect) marcaSelect.disabled=isFechada||isAprovada; var badge=$('statusBadge'); if(badge){ badge.className='status-badge'; var statusConfig={ abertura:{text:'EM ABERTURA', class:'status-abertura'}, execucao:{text:'EM EXECUCAO', class:'status-execucao'}, finalizacao:{text:'FINALIZANDO', class:'status-finalizacao'}, fechada:{text:'FECHADA', class:'status-fechada'}, aprovada:{text:'APROVADA', class:'status-aprovada'} }; var cfg=statusConfig[State.currentStatus]; badge.textContent=cfg.text; badge.classList.add(cfg.class); } var steps=['abertura','execucao','finalizacao','fechada','aprovada']; document.querySelectorAll('.step').forEach((step,idx)=>{ step.classList.remove('active','completed','locked'); if(steps[idx]===State.currentStatus) step.classList.add('active'); else if(steps.indexOf(State.currentStatus)>idx) step.classList.add(steps[idx]==='fechada'&&State.currentStatus==='aprovada'?'locked':'completed'); }); }, 
+  coletarDados: function(){ var data={}; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(el=>{ if(el.id&&el.type!=='file') data[el.id]=el.value; }); document.querySelectorAll('input[data-check="true"]').forEach(cb=>{ data[cb.id]=cb.checked; }); document.querySelectorAll('#checklistSections select').forEach(sel=>{ data[sel.id]=sel.value; }); var marcaSelect=$('marcaSelect').value, marcaOutra=$('marcaOutra').value; data.marca=marcaSelect==='OUTRA'?marcaOutra.toUpperCase():marcaSelect; return data; }, 
+  salvar: async function(){ Signature.save('tec'); Signature.save('cli'); var data=this.coletarDados(); data.status=State.currentStatus; data.fotosBase64=State.fotosServico; data.fotoHorimetro=State.fotoHorimetro; data.fotosPendencias=State.fotosPendencias; data.assinaturaTecnico=Utils.getVal('assinaturaTecnicoData'); data.assinaturaCliente=Utils.getVal('assinaturaClienteData'); Horas.calcular(); data.horasTotais=Utils.getVal('horasTotais'); data.totalGeral=Utils.getVal('totalGeral'); if(!data.numeroOS){ data.numeroOS=Utils.generateOSNumber(); } try { var idx=State.osHistory.findIndex(os=>os.numeroOS===data.numeroOS); if(idx>=0) State.osHistory[idx]=data; else State.osHistory.unshift(data); Storage.saveOSHistory(); await Cloud.saveOSToCloud(data); State.hasUnsavedChanges=false; Historico.updateStats(); Clientes.updateStats(); return true; } catch(e){ showToast('Erro ao salvar',true); return false; } }, 
+  salvarOSManual: async function(){ var ok=await this.salvar(); if(ok){ showToast('OS salva com sucesso'); Historico.render(); } }, 
+  mudarStatus: async function(novoStatus){ if(novoStatus==='abertura'){ if(!Utils.getVal('numeroOS')){ showToast('Clique em Nova OS primeiro.',true); return; } if(!Utils.getVal('cliente').trim()){ showToast('Cliente obrigatório para abrir a OS.',true); return; } } if(novoStatus==='execucao' && State.currentStatus!=='abertura'){ showToast('A OS precisa estar EM ABERTURA para iniciar execução.',true); return; } if(novoStatus==='finalizacao' && State.currentStatus!=='execucao'){ showToast('A OS precisa estar EM EXECUÇÃO para finalizar.',true); return; } if(novoStatus==='fechada' && State.currentStatus!=='finalizacao'){ showToast('A OS precisa estar FINALIZANDO para ser fechada.',true); return; } if(novoStatus==='aprovada'){ if(State.currentStatus!=='fechada'){ showToast('A OS precisa estar FECHADA para aprovação.',true); return; } if(!Utils.getVal('assinaturaClienteData')){ showToast('O cliente deve assinar digitalmente.',true); return; } if(!Utils.getVal('recebedor').trim()){ showToast('Informe o nome do recebedor.',true); return; } } State.currentStatus=novoStatus; if(novoStatus==='finalizacao'||novoStatus==='fechada') Horas.calcular(); var ok=await this.salvar(); if(ok){ this.updateUI(); Historico.render(); showToast('Status: '+Utils.formatStatus(novoStatus)); } }, 
+  iniciarExecucao: function(){ if(State.currentStatus!=='abertura') return; this.mudarStatus('execucao'); Timer.control('start'); showToast('Execução iniciada'); }, 
+  finalizarServico: function(){ if(State.currentStatus!=='execucao') return; var horimetro=Utils.getVal('horimetro'); if(!horimetro){ showToast('Preencha o campo Horímetro antes de finalizar o serviço.',true); return; } Timer.control('stop'); Horas.calcular(); this.mudarStatus('finalizacao'); showToast('Serviço finalizado'); }, 
+  fecharOS: async function(){ if(State.currentStatus!=='finalizacao') return; var descricao=Utils.getVal('descricaoServico').trim(); if(!descricao){ showToast('Descreva o serviço realizado antes de fechar a OS.',true); return; } var horimetro=Utils.getVal('horimetro'); if(!horimetro){ showToast('Campo Horímetro obrigatório.',true); return; } Horas.calcular(); if(!confirm('Fechar esta OS? Após fechada, os dados não poderão ser alterados.')) return; await this.mudarStatus('fechada'); showToast('OS fechada'); }, 
+  novaOS: function(){ if(State.hasUnsavedChanges && !confirm('Há alterações não salvas. Criar nova OS?')) return; State.currentStatus='abertura'; State.fotosServico=[]; State.fotoHorimetro=null; State.fotosPendencias=[]; State.hasUnsavedChanges=false; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(el=>{ if(el.id&&el.type!=='file'){ el.value=''; } }); Utils.setDefaultDate(); document.querySelectorAll('input[data-check="true"]').forEach(cb=>{ cb.checked=false; }); Checklist.updateProgress(); var preview=$('fotosPreview'); if(preview) preview.innerHTML=''; var previewH=$('fotoHorimetroPreview'); if(previewH) previewH.innerHTML=''; var previewP=$('fotosPendenciasPreview'); if(previewP) previewP.innerHTML=''; $('fotosServico').value=''; $('fotoHorimetroInput').value=''; $('fotosPendenciasInput').value=''; Signature.clear('tec'); Signature.clear('cli'); Timer.reset(); Timer.seconds=0; Timer.running=false; Timer.paused=false; if(Timer.interval) clearInterval(Timer.interval); Utils.generateOSNumber(); this.updateUI(); showToast('Nova OS criada'); var tabClientesBtn=document.querySelector('.tab-button[data-tab="tab-clientes"]'); if(tabClientesBtn) tabClientesBtn.click(); }, 
+  getResumoEmail: function(){ var tipoChamado=Utils.getVal('tipoChamado')||'normal', tipoChamadoFormatado=Utils.formatTipoChamado(tipoChamado), statusTexto=Utils.formatStatus(State.currentStatus), horasTotais=Utils.getVal('horasTotais')||'0h', marca=Utils.getVal('marca')||'Não informada', modelo=Utils.getVal('modelo')||'Não informado', descricao=Utils.getVal('descricaoServico')||'Não informado', pecas=Utils.getVal('pecasAplicadas')||'Nenhuma peça informada', pendencias=Utils.getVal('pendencias')||'Nenhuma pendência informada', relato=Utils.getVal('relatoCliente')||'Não informado', clienteNome=Utils.getVal('cliente'), clienteEncontrado=State.clients.find(c=>c.nome===clienteNome), emailCliente=clienteEncontrado?clienteEncontrado.email:'', responsavelNome=clienteEncontrado?clienteEncontrado.responsavel_nome:'', cnpjCliente=Utils.getVal('cnpj')||(clienteEncontrado?clienteEncontrado.cnpj:''), dataOS=Utils.getVal('dataOS')||new Date().toLocaleDateString('pt-BR'), numeroOS=Utils.getVal('numeroOS')||'OS-'+Date.now(), resumo='🏭 *MARLIFT EMPILHADEIRAS*\n━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━\n📋 *OS:* '+numeroOS+'\n📅 *Data:* '+dataOS+'\n👤 *Cliente:* '+clienteNome+'\n'; if(cnpjCliente) resumo+='🏭 *CNPJ/CPF:* '+cnpjCliente+'\n'; if(emailCliente) resumo+='📧 *E-mail:* '+emailCliente+'\n'; if(responsavelNome) resumo+='👨‍💼 *Responsável:* '+responsavelNome+'\n'; resumo+='🔧 *Empilhadeira:* '+marca+' '+modelo+'\n⏱️ *Tempo de Serviço:* '+horasTotais+'\n✅ *Status:* '+statusTexto+'\n📄 *Tipo de Chamado:* '+tipoChamadoFormatado+'\n🗣️ *Relato do Cliente:*\n'+relato+'\n\n📝 *Serviço Realizado:*\n'+descricao+'\n\n'; if(pecas&&pecas!=='Nenhuma peça informada') resumo+='🔩 *Peças Aplicadas:*\n'+pecas+'\n\n'; if(pendencias&&pendencias!=='Nenhuma pendência informada') resumo+='⚠️ *Pendências:*\n'+pendencias+'\n\n'; resumo+='━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━\n📱 *MARLIFT Empilhadeiras*\n🏭 *Excelência em Movimento*'; return resumo; }, 
+  enviarEmailComResumo: function(){ if(State.currentStatus!=='aprovada'){ showToast('Somente OS aprovadas podem ser enviadas por e-mail.',true); return; } var clienteNome=Utils.getVal('cliente'), clienteEncontrado=State.clients.find(c=>c.nome===clienteNome), emailCliente=clienteEncontrado?clienteEncontrado.email:''; if(!emailCliente){ var emailDigitado=prompt('Cliente não possui e-mail cadastrado. Digite o e-mail para envio:',''); if(!emailDigitado||!emailDigitado.includes('@')){ showToast('E-mail inválido!',true); return; } emailCliente=emailDigitado; } var assunto='MARLIFT - Relatório da Ordem de Serviço '+Utils.getVal('numeroOS'), corpo=this.getResumoEmail(), mailtoLink='mailto:'+encodeURIComponent(emailCliente)+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo); window.location.href=mailtoLink; showToast('Abrindo cliente de e-mail com o resumo da OS'); }, 
+  gerarPreviaPDF: function(){ if(State.currentStatus!=='aprovada'){ showToast('Somente OS aprovadas geram PDF.',true); return; } var html=this.gerarRelatorioHTML(); var win=window.open(); win.document.write(html); win.document.close(); setTimeout(function(){ win.print(); },500); }, 
+  gerarRelatorioHTML: function(){ var tipoChamado=Utils.getVal('tipoChamado')||'normal', tipoChamadoFormatado=Utils.formatTipoChamado(tipoChamado), endereco=Utils.getVal('endereco'), mapaLink=endereco?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(endereco):'#', mapaHtml=endereco?'<div style="margin-top:8px;"><a href="'+mapaLink+'" target="_blank" style="display:inline-flex; align-items:center; gap:8px; background:#f97316; color:white; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:bold;">📍 Ver localização no Google Maps</a></div>':'', fotosHtml=State.fotosServico.length?'<div style="margin-top:20px;"><h3>📸 Registro Fotográfico do Serviço</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">'+State.fotosServico.map(src=>'<img src="'+src+'" style="max-width:200px;max-height:200px;border-radius:8px;border:1px solid #ccc;">').join('')+'</div></div>':'', fotosPendHtml=State.fotosPendencias.length?'<div style="margin-top:20px;"><h3>⚠️ Registro Fotográfico das Pendências</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">'+State.fotosPendencias.map(src=>'<img src="'+src+'" style="max-width:200px;max-height:200px;border-radius:8px;border:1px solid #ccc;">').join('')+'</div></div>':'', horimetroImg=State.fotoHorimetro?'<div><h3>📊 Horímetro</h3><img src="'+State.fotoHorimetro+'" style="max-width:180px;border:1px solid #ccc;border-radius:8px;"></div>':'', checklistItems=[]; document.querySelectorAll('input[data-check="true"]').forEach(cb=>{ if(cb.checked) checklistItems.push(cb.parentElement.innerText.trim()); }); var checklistHtml=checklistItems.length?'<div><h3>✅ Itens Verificados</h3><ul>'+checklistItems.map(i=>'<li>'+i+'</li>').join('')+'</ul></div>':'', clienteNome=Utils.getVal('cliente'), clienteEncontrado=State.clients.find(c=>c.nome===clienteNome), emailCliente=clienteEncontrado?(clienteEncontrado.email||'Não informado'):'Não informado', responsavelNome=clienteEncontrado?(clienteEncontrado.responsavel_nome||'Não informado'):'Não informado', responsavelTelefone=clienteEncontrado?(clienteEncontrado.responsavel_telefone||'Não informado'):'Não informado', horasCobradas=Utils.getVal('horasTotais')||'0h', horasExtras=Utils.getVal('horasExtras')||'00:00', adicionalNoturno=Utils.getVal('adicionalNoturno')||'00:00', totalGeral=Utils.getVal('totalGeral')||'00:00'; return '<!DOCTYPE html><html><head><title>Relatorio_'+Utils.getVal('numeroOS')+'</title><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:30px;max-width:900px;margin:auto;color:#1e293b;}h1{color:#f97316;margin-bottom:5px;font-size:28px;}h2{color:#374151;margin-top:25px;font-size:20px;}h3{color:#4b5563;margin-top:15px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;}.header{border-bottom:2px solid #f97316;margin-bottom:20px;padding-bottom:15px;text-align:center;}.logo-area{display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:10px;}.logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:15px;display:flex;align-items:center;justify-content:center;}.logo-icon svg{width:40px;height:40px;color:white;}.footer{margin-top:40px;font-size:10px;text-align:center;border-top:1px solid #ccc;padding-top:15px;color:#6b7280;}.assinatura-img{max-width:200px;max-height:80px;border:1px solid #ddd;border-radius:8px;}.section{margin-bottom:20px;}p{margin:5px 0;}.status-aprovada{background:#22c55e20;color:#16a34a;padding:5px 12px;border-radius:20px;font-weight:bold;display:inline-block;}.info-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:10px;gap:10px;}.cliente-linha{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #f97316;}.equip-linha{background:#f1f5f9;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #10b981;}.horas-linha{background:#f1f5f9;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #10b981;display:flex;flex-wrap:wrap;justify-content:space-around;text-align:center;}.horas-item{flex:1;min-width:120px;}</style></head><body><div class="header"><div class="logo-area"><div class="logo-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1>MARLIFT EMPILHADEIRAS</h1><p style="margin:0;">Excelência em Movimento</p></div></div><h2>RELATÓRIO FINAL - OS '+Utils.getVal('numeroOS')+'</h2><p><strong>Data de Emissão:</strong> '+new Date().toLocaleString('pt-BR')+'</p><div class="info-row"><span class="status-aprovada">✅ APROVADA PELO CLIENTE</span> <span style="background:#f9731620; color:#f97316; padding:5px 12px; border-radius:20px; font-weight:bold;">📋 TIPO: '+tipoChamadoFormatado+'</span></div></div><div class="section"><h3>📋 Dados do Cliente</h3><div class="cliente-linha"><strong>👤 Cliente:</strong> '+Utils.getVal('cliente')+'  |  <strong>📄 CNPJ/CPF:</strong> '+Utils.getVal('cnpj')+'</div><div><strong>📧 E-mail:</strong> '+emailCliente+'</div><div><strong>👨‍💼 Responsável:</strong> '+responsavelNome+'  |  <strong>📞 Telefone:</strong> '+responsavelTelefone+'</div><div><strong>📍 Endereço:</strong> '+Utils.getVal('endereco')+' - '+Utils.getVal('cidadeCliente')+'</div>'+mapaHtml+'</div><div class="section"><h3>🏗️ Equipamento</h3><div class="equip-linha"><strong>🔧 Marca:</strong> '+Utils.getVal('marca')+'  |  <strong>📐 Modelo:</strong> '+Utils.getVal('modelo')+'  |  <strong>🔢 Nº Série:</strong> '+Utils.getVal('numSerie')+'  |  <strong>⏱️ Horímetro:</strong> '+Utils.getVal('horimetro')+'h</div>'+horimetroImg+'</div><div class="section"><h3>🔧 Serviço Executado</h3><p><strong>Diagnóstico:</strong><br>'+(Utils.getVal('descricaoServico')||'').replace(/\n/g,'<br>')+'</p><p><strong>Peças Aplicadas:</strong><br>'+(Utils.getVal('pecasAplicadas')||'').replace(/\n/g,'<br>')+'</p><p><strong>Pendências:</strong><br>'+(Utils.getVal('pendencias')||'').replace(/\n/g,'<br>')+'</p></div>'+checklistHtml+fotosHtml+fotosPendHtml+'<div class="section"><h3>⏱️ Horas Trabalhadas</h3><div class="horas-linha"><div class="horas-item"><strong>Horas Cobradas</strong><br><span style="font-size:1.3em; color:#16a34a;">'+horasCobradas+'</span></div><div class="horas-item"><strong>Horas Extras</strong><br>'+horasExtras+'</div><div class="horas-item"><strong>Adicional Noturno</strong><br>'+adicionalNoturno+'</div><div class="horas-item"><strong>TOTAL GERAL</strong><br><span style="font-size:1.3em; color:#16a34a; font-weight:bold;">'+totalGeral+'</span></div></div></div><div class="section"><h3>✍️ Assinaturas de Aprovação</h3><div style="display:flex;gap:60px;margin-top:15px;flex-wrap:wrap;"><div><strong>Técnico:</strong> '+Utils.getVal('tecnico')+'<br>'+(Utils.getVal('assinaturaTecnicoData')?'<img src="'+Utils.getVal('assinaturaTecnicoData')+'" class="assinatura-img">':'<p style="color:#999;">Não assinado</p>')+'</div><div><strong>Cliente:</strong> '+Utils.getVal('recebedor')+'<br>'+(Utils.getVal('assinaturaClienteData')?'<img src="'+Utils.getVal('assinaturaClienteData')+'" class="assinatura-img">':'<p style="color:#999;">Não assinado</p>')+'</div></div></div><div class="footer">Documento gerado eletronicamente - MARLIFT Empilhadeiras<br>Este documento é válido como comprovante de serviço prestado.</div></body></html>'; }, 
+  abrirMapa: function(){ var end=Utils.getVal('endereco'); if(end) window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(end)); else showToast('Informe o endereço primeiro.',true); }, 
+  sendWhatsAppMessage: function(){ var numero=prompt('WhatsApp com DDD:',Utils.getVal('whatsappCliente')); if(!numero) return; var msg=this.getResumoEmail(); window.open('https://wa.me/'+numero.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)); } 
 };
 
-document.addEventListener('DOMContentLoaded', function() { App.init(); });
+document.addEventListener('DOMContentLoaded', function(){ App.init(); });
 </script>
 </body>
 </html>
