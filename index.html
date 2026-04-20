@@ -596,6 +596,130 @@ var App = {
   sendWhatsAppMessage: function() { var numero = prompt('WhatsApp com DDD:', Utils.getVal('whatsappCliente')); if (!numero) return; var msg = this.getResumoEmail(); window.open('https://wa.me/' + numero.replace(/\D/g, '') + '?text=' + encodeURIComponent(msg)); }
 };
 
+// ==================== INTEGRAÇÃO COM GOOGLE SHEETS ====================
+const GoogleSheets = {
+  url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyIN-Q9gqrixOAJsg_rarhzngKE8aZz9JUH2kZ8fpCCISYCQbqm_1t-RRUmt4FVA6Y34S5XsPg9u4k/pub?output=csv', // ATUALIZE COM SEU LINK
+  clientesRemotos: [],
+  
+  // Buscar dados do CSV
+  async fetchClientes() {
+    try {
+      const response = await fetch(this.url);
+      if (!response.ok) throw new Error('Erro ao acessar planilha');
+      const csvText = await response.text();
+      this.clientesRemotos = this.parseCSV(csvText);
+      this.mergeClientes();
+      showToast(`✅ ${this.clientesRemotos.length} clientes carregados da planilha!`);
+      return this.clientesRemotos;
+    } catch (error) {
+      console.error('Erro no Google Sheets:', error);
+      showToast('⚠️ Não foi possível carregar planilha. Verifique o link.', true);
+      return [];
+    }
+  },
+  
+  // Converter CSV para array de objetos
+  parseCSV(csv) {
+    const linhas = csv.split(/\r?\n/);
+    if (linhas.length < 2) return [];
+    
+    const cabecalhos = linhas[0].split(',').map(h => h.trim().toLowerCase());
+    const clientes = [];
+    
+    for (let i = 1; i < linhas.length; i++) {
+      if (!linhas[i].trim()) continue;
+      
+      // Quebra respeitando aspas (para campos com vírgula)
+      const valores = this.quebraCSV(linhas[i]);
+      const cliente = {};
+      
+      cabecalhos.forEach((cab, idx) => {
+        let valor = valores[idx] ? valores[idx].trim() : '';
+        // Remove aspas se existirem
+        if (valor.startsWith('"') && valor.endsWith('"')) {
+          valor = valor.slice(1, -1);
+        }
+        cliente[cab] = valor;
+      });
+      
+      // Só adiciona se tiver pelo menos o nome
+      if (cliente.nome) {
+        cliente.id = Date.now() + i; // ID único temporário
+        cliente.equipamentos = cliente.equipamentos ? JSON.parse(cliente.equipamentos) : [];
+        clientes.push(cliente);
+      }
+    }
+    return clientes;
+  },
+  
+  // Função auxiliar para quebrar CSV com aspas
+  quebraCSV(linha) {
+    const resultado = [];
+    let dentroAspas = false;
+    let valorAtual = '';
+    
+    for (let i = 0; i < linha.length; i++) {
+      const char = linha[i];
+      if (char === '"') {
+        dentroAspas = !dentroAspas;
+      } else if (char === ',' && !dentroAspas) {
+        resultado.push(valorAtual);
+        valorAtual = '';
+      } else {
+        valorAtual += char;
+      }
+    }
+    resultado.push(valorAtual);
+    return resultado;
+  },
+  
+  // Mesclar clientes da planilha com os já cadastrados (evitar duplicatas por nome)
+  mergeClientes() {
+    if (!this.clientesRemotos.length) return;
+    
+    // Criar um mapa de clientes existentes (por nome)
+    const clientesExistentesMap = new Map();
+    State.clients.forEach(c => clientesExistentesMap.set(c.nome, c));
+    
+    // Adicionar ou atualizar com os dados da planilha
+    this.clientesRemotos.forEach(clientePlanilha => {
+      if (clientesExistentesMap.has(clientePlanilha.nome)) {
+        // Atualiza dados do cliente existente (mantém ID original)
+        const existente = clientesExistentesMap.get(clientePlanilha.nome);
+        Object.assign(existente, clientePlanilha);
+      } else {
+        // Adiciona novo cliente
+        State.clients.push(clientePlanilha);
+      }
+    });
+    
+    // Salvar no localStorage e recarregar interface
+    Storage.saveClients();
+    Clientes.renderTable();
+    Clientes.updateStats();
+    Historico.updateStats();
+  },
+  
+  // Forçar recarga manual (botão extra)
+  async recarregar() {
+    showToast('🔄 Recarregando clientes da planilha...');
+    await this.fetchClientes();
+  }
+};
+
+// Adicionar botão de recarga na interface (opcional, mas útil)
+function adicionarBotaoRecarga() {
+  const header = document.querySelector('header .flex.flex-wrap.gap-2');
+  if (header && !document.getElementById('btnRecargaPlanilha')) {
+    const btn = document.createElement('button');
+    btn.id = 'btnRecargaPlanilha';
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Recarregar Planilha';
+    btn.className = 'btn btn-secondary text-sm';
+    btn.onclick = () => GoogleSheets.recarregar();
+    header.appendChild(btn);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() { App.init(); });
 </script>
 </body>
