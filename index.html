@@ -125,6 +125,7 @@
         <button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> Enviar E-mail</button>
         <button onclick="App.sendWhatsAppMessage()" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button>
         <button onclick="App.novaOS()" class="btn btn-yellow text-sm"><i class="fas fa-plus"></i> Nova O.S</button>
+        <button id="btnRecargaPlanilha" onclick="GoogleSheets.recarregar()" class="btn btn-secondary text-sm"><i class="fas fa-sync-alt"></i> Carregar Planilha</button>
       </div>
     </div>
   </header>
@@ -510,7 +511,7 @@ const GoogleSheets = {
       return this.clientesRemotos;
     } catch (error) {
       console.error('Erro no Google Sheets:', error);
-      showToast('⚠️ Não foi possível carregar planilha. Verifique o link e se a planilha está publicada.', true);
+      showToast('⚠️ Não foi possível carregar planilha. Verifique se a planilha está publicada como CSV.', true);
       return [];
     }
   },
@@ -538,7 +539,18 @@ const GoogleSheets = {
       
       if (cliente.nome) {
         cliente.id = Date.now() + i;
-        cliente.equipamentos = [];
+        // Se a planilha tiver colunas de equipamento, usa elas
+        if (cliente.marca || cliente.modelo || cliente.serie) {
+          cliente.equipamentos = [{
+            marca: cliente.marca || '',
+            modelo: cliente.modelo || '',
+            serie: cliente.serie || '',
+            qtd: cliente.qtd || 1,
+            combustivel: cliente.combustivel || ''
+          }];
+        } else {
+          cliente.equipamentos = [];
+        }
         clientes.push(cliente);
       }
     }
@@ -574,7 +586,25 @@ const GoogleSheets = {
     this.clientesRemotos.forEach(clientePlanilha => {
       if (clientesExistentesMap.has(clientePlanilha.nome)) {
         const existente = clientesExistentesMap.get(clientePlanilha.nome);
-        Object.assign(existente, clientePlanilha);
+        // Atualiza dados básicos
+        existente.cnpj = clientePlanilha.cnpj || existente.cnpj;
+        existente.endereco = clientePlanilha.endereco || existente.endereco;
+        existente.cidade = clientePlanilha.cidade || existente.cidade;
+        existente.telefone = clientePlanilha.telefone || existente.telefone;
+        existente.whatsapp = clientePlanilha.whatsapp || existente.whatsapp;
+        existente.email = clientePlanilha.email || existente.email;
+        existente.responsavel_nome = clientePlanilha.responsavel_nome || existente.responsavel_nome;
+        existente.responsavel_telefone = clientePlanilha.responsavel_telefone || existente.responsavel_telefone;
+        // Adiciona equipamento se veio da planilha
+        if (clientePlanilha.equipamentos && clientePlanilha.equipamentos.length > 0) {
+          if (!existente.equipamentos) existente.equipamentos = [];
+          clientePlanilha.equipamentos.forEach(eqNovo => {
+            const existe = existente.equipamentos.some(eq => eq.marca === eqNovo.marca && eq.modelo === eqNovo.modelo);
+            if (!existe && eqNovo.marca) {
+              existente.equipamentos.push(eqNovo);
+            }
+          });
+        }
       } else {
         State.clients.push(clientePlanilha);
       }
@@ -591,19 +621,6 @@ const GoogleSheets = {
     await this.fetchClientes();
   }
 };
-
-// Função para adicionar botão de recarga
-function adicionarBotaoRecarga() {
-  const header = document.querySelector('header .flex.flex-wrap.gap-2');
-  if (header && !document.getElementById('btnRecargaPlanilha')) {
-    const btn = document.createElement('button');
-    btn.id = 'btnRecargaPlanilha';
-    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Carregar Planilha';
-    btn.className = 'btn btn-secondary text-sm';
-    btn.onclick = () => GoogleSheets.recarregar();
-    header.appendChild(btn);
-  }
-}
 
 var App = { 
   init: function() { 
@@ -622,9 +639,8 @@ var App = {
       this.setupSearch(); 
       State.currentStatus = 'abertura'; 
       this.updateUI(); 
-      adicionarBotaoRecarga();
       
-      // Carregar planilha sem travar (opcional, assíncrono)
+      // Carregar planilha sem travar (assíncrono)
       setTimeout(function() {
         GoogleSheets.fetchClientes();
       }, 500);
@@ -647,8 +663,8 @@ var App = {
       cliente.equipamentos.forEach(function(eq, idx) {
         var div = document.createElement('div');
         div.className = 'equip-option';
-        div.innerHTML = '<div><strong><i class="fas fa-forklift"></i> ' + eq.marca + ' ' + eq.modelo + '</strong></div>' +
-          '<div class="text-sm text-[var(--muted)]">Série: ' + (eq.serie || 'N/A') + ' | Qtd: ' + eq.qtd + ' | Combustível: ' + (eq.combustivel || 'N/A') + '</div>';
+        div.innerHTML = '<div><strong><i class="fas fa-forklift"></i> ' + (eq.marca || 'N/A') + ' ' + (eq.modelo || '') + '</strong></div>' +
+          '<div class="text-sm text-[var(--muted)]">Série: ' + (eq.serie || 'N/A') + ' | Qtd: ' + (eq.qtd || 1) + ' | Combustível: ' + (eq.combustivel || 'N/A') + '</div>';
         div.onclick = function() {
           App.carregarEquipamento(eq, cliente);
           modal.style.display = 'none';
@@ -656,7 +672,23 @@ var App = {
         equipList.appendChild(div);
       });
     } else {
-      equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado</div>';
+      // Se não tem equipamentos, carrega só os dados do cliente
+      equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado. Clique em "Selecionar" para carregar apenas os dados do cliente.</div>';
+      var btnSimples = document.createElement('button');
+      btnSimples.className = 'btn btn-primary w-full mt-2';
+      btnSimples.innerHTML = 'Carregar apenas dados do cliente';
+      btnSimples.onclick = function() {
+        Utils.setVal('cliente', cliente.nome);
+        Utils.setVal('cnpj', cliente.cnpj);
+        Utils.setVal('cidadeCliente', cliente.cidade);
+        Utils.setVal('endereco', cliente.endereco);
+        Utils.setVal('whatsappCliente', cliente.whatsapp);
+        showToast('Cliente carregado');
+        modal.style.display = 'none';
+        var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]');
+        if (tabOsBtn) tabOsBtn.click();
+      };
+      equipList.appendChild(btnSimples);
     }
     modal.style.display = 'flex';
   },
@@ -668,21 +700,22 @@ var App = {
     Utils.setVal('whatsappCliente', cliente.whatsapp);
     var selectMarca = $('marcaSelect');
     if (selectMarca) {
-      if (Config.marcas.indexOf(equip.marca) !== -1) {
-        selectMarca.value = equip.marca;
+      var marcaEquip = equip.marca || '';
+      if (Config.marcas.indexOf(marcaEquip) !== -1) {
+        selectMarca.value = marcaEquip;
         var outraDiv = $('marcaOutraDiv');
         if (outraDiv) outraDiv.style.display = 'none';
-      } else if (equip.marca) {
+      } else if (marcaEquip) {
         selectMarca.value = 'OUTRA';
-        Utils.setVal('marcaOutra', equip.marca);
+        Utils.setVal('marcaOutra', marcaEquip);
         var outraDiv = $('marcaOutraDiv');
         if (outraDiv) outraDiv.style.display = 'block';
       }
     }
-    Utils.setVal('modelo', equip.modelo);
-    Utils.setVal('numSerie', equip.serie);
+    Utils.setVal('modelo', equip.modelo || '');
+    Utils.setVal('numSerie', equip.serie || '');
     if (equip.combustivel) Utils.setVal('combustivel', equip.combustivel);
-    showToast('Equipamento carregado: ' + equip.marca + ' ' + equip.modelo);
+    showToast('Equipamento carregado: ' + (equip.marca || '') + ' ' + (equip.modelo || ''));
     var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]');
     if (tabOsBtn) tabOsBtn.click();
   },
