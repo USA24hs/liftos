@@ -453,12 +453,69 @@ var Checklist = {
   updateProgress: function() { var checkboxes = document.querySelectorAll('input[data-check="true"]'); this.checked = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length; var pct = this.total > 0 ? Math.round((this.checked / this.total) * 100) : 0; var progText = $('progressText'); if (progText) progText.textContent = pct + '%'; var fill = $('progressFill'); if (fill) fill.style.width = pct + '%'; }
 };
 
+// Função CORRIGIDA para adicionar campo de equipamento
+function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
+  marca = marca || '';
+  modelo = modelo || '';
+  serie = serie || '';
+  qtd = qtd || 1;
+  combustivel = combustivel || '';
+  var container = $('equipamentosList');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.className = 'equip-item';
+  
+  // Criar select de marcas SEM duplicar OUTRA
+  var options = '<option value="">Selecione</option>';
+  Config.marcas.forEach(function(m) {
+    if (m !== 'OUTRA') { // Pula a opção OUTRA da lista padrão
+      options += '<option value="' + m + '"' + (marca === m ? ' selected' : '') + '>' + m + '</option>';
+    }
+  });
+  options += '<option value="OUTRA"' + (marca === 'OUTRA' ? ' selected' : '') + '>OUTRA</option>';
+  
+  div.innerHTML = `
+    <select class="form-input w-28 equip-marca">${options}</select>
+    <div class="outra-marca-container" style="display:${marca === 'OUTRA' ? 'block' : 'none'}">
+      <input type="text" placeholder="Digite a marca" class="form-input w-28 outra-marca" value="${marca === 'OUTRA' ? '' : marca}">
+    </div>
+    <input type="text" placeholder="Modelo" class="form-input w-28 equip-modelo" value="${modelo}">
+    <input type="text" placeholder="Série" class="form-input w-28 equip-serie" value="${serie}">
+    <input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="${qtd}">
+    <select class="form-input w-28 equip-combustivel">
+      <option value="">Combustível</option>
+      <option value="eletrico" ${combustivel === 'eletrico' ? 'selected' : ''}>Elétrico</option>
+      <option value="diesel" ${combustivel === 'diesel' ? 'selected' : ''}>Diesel</option>
+      <option value="gasolina" ${combustivel === 'gasolina' ? 'selected' : ''}>Gasolina</option>
+      <option value="glp" ${combustivel === 'glp' ? 'selected' : ''}>GLP</option>
+    </select>
+    <button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+  `;
+  container.appendChild(div);
+  
+  var select = div.querySelector('.equip-marca');
+  var outraDiv = div.querySelector('.outra-marca-container');
+  select.addEventListener('change', function() {
+    outraDiv.style.display = select.value === 'OUTRA' ? 'block' : 'none';
+    if (select.value !== 'OUTRA') {
+      var outraInput = div.querySelector('.outra-marca');
+      if (outraInput) outraInput.value = '';
+    }
+  });
+  
+  // Se já veio com OUTRA selecionado, ajusta
+  if (marca === 'OUTRA') {
+    var outraInput = div.querySelector('.outra-marca');
+    if (outraInput && marca !== 'OUTRA') outraInput.value = marca;
+  }
+}
+
 var Clientes = { 
   load: function() { State.clients = Storage.loadClients(); this.renderTable(); this.updateStats(); },
   updateStats: function() { var totalClientes = State.clients.length; var totalMarcas = 0; State.clients.forEach(function(c) { totalMarcas += (c.equipamentos || []).length; }); var clientesComOS = new Set(); var totalOS = 0; var osAbertas = 0; var osAprovadas = 0; State.osHistory.forEach(function(os) { if (os.cliente) { clientesComOS.add(os.cliente); totalOS++; } if (os.status === 'abertura' || os.status === 'execucao' || os.status === 'finalizacao') osAbertas++; if (os.status === 'aprovada') osAprovadas++; }); $('statTotalClientes').innerText = totalClientes; $('statTotalMarcas').innerText = totalMarcas; $('statClientesComOS').innerText = clientesComOS.size; $('statTotalOSClientes').innerText = totalOS; $('statOSAbertasCliente').innerText = osAbertas; $('statOSAprovadasCliente').innerText = osAprovadas; },
-  renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + c.nome + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
-  addEquipField: function(marca, modelo, serie, qtd, combustivel) { marca = marca || ''; modelo = modelo || ''; serie = serie || ''; qtd = qtd || 1; combustivel = combustivel || ''; var container = $('equipamentosList'); if (!container) return; var div = document.createElement('div'); div.className = 'equip-item'; var options = Config.marcas.map(function(m) { return '<option value="' + m + '"' + (marca === m ? ' selected' : '') + '>' + m + '</option>'; }).join(''); div.innerHTML = '<select class="form-input w-24 equip-marca">' + options + '<option value="OUTRA">OUTRA</option></select><div class="outra-marca-container" style="display:none"><input type="text" placeholder="Outra marca" class="form-input w-24 outra-marca"></div><input type="text" placeholder="Modelo" class="form-input w-24 equip-modelo" value="' + modelo + '"><input type="text" placeholder="Serie" class="form-input w-24 equip-serie" value="' + serie + '"><input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="' + qtd + '"><select class="form-input w-28 equip-combustivel"><option value="">Combustível</option><option value="eletrico" ' + (combustivel === 'eletrico' ? 'selected' : '') + '>Elétrico</option><option value="diesel" ' + (combustivel === 'diesel' ? 'selected' : '') + '>Diesel</option><option value="gasolina" ' + (combustivel === 'gasolina' ? 'selected' : '') + '>Gasolina</option><option value="glp" ' + (combustivel === 'glp' ? 'selected' : '') + '>GLP</option></select><button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>'; container.appendChild(div); var select = div.querySelector('.equip-marca'); var outraDiv = div.querySelector('.outra-marca-container'); select.addEventListener('change', function() { outraDiv.style.display = select.value === 'OUTRA' ? 'block' : 'none'; }); if (marca && Config.marcas.indexOf(marca) === -1) { select.value = 'OUTRA'; div.querySelector('.outra-marca').value = marca; outraDiv.style.display = 'block'; } },
-  save: function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marca = item.querySelector('.equip-marca').value; var outra = item.querySelector('.outra-marca') ? item.querySelector('.outra-marca').value : ''; equipamentos.push({ marca: marca === 'OUTRA' ? outra.toUpperCase() : marca, modelo: item.querySelector('.equip-modelo').value, serie: item.querySelector('.equip-serie').value, qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value }); }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); },
+  renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + (c.nome || '-') + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
+  addEquipField: function(marca, modelo, serie, qtd, combustivel) { adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel); },
+  save: function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marcaSelect = item.querySelector('.equip-marca').value; var outraInput = item.querySelector('.outra-marca'); var marca = marcaSelect === 'OUTRA' ? (outraInput ? outraInput.value.toUpperCase() : '') : marcaSelect; if (marca) { equipamentos.push({ marca: marca, modelo: item.querySelector('.equip-modelo').value || '', serie: item.querySelector('.equip-serie').value || '', qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value || '' }); } }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); },
   select: function(id) { 
     var c = State.clients.find(function(c) { return c.id === id; });
     if (!c) return;
@@ -475,11 +532,11 @@ var Clientes = {
       if (tabOsBtn) tabOsBtn.click();
     }
   },
-  edit: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; State.editingClientId = id; Utils.setVal('cad_nome', c.nome); Utils.setVal('cad_cnpj', c.cnpj); Utils.setVal('cad_endereco', c.endereco); Utils.setVal('cad_cidade', c.cidade); Utils.setVal('cad_telefone', c.telefone); Utils.setVal('cad_whatsapp', c.whatsapp); Utils.setVal('cad_email', c.email || ''); Utils.setVal('cad_responsavel_nome', c.responsavel_nome || ''); Utils.setVal('cad_responsavel_telefone', c.responsavel_telefone || ''); var container = $('equipamentosList'); if (container) container.innerHTML = ''; if (c.equipamentos && c.equipamentos.length) { c.equipamentos.forEach(function(eq) { Clientes.addEquipField(eq.marca, eq.modelo, eq.serie, eq.qtd, eq.combustivel); }); } var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'inline-flex'; showToast('Editando cliente'); },
+  edit: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; State.editingClientId = id; Utils.setVal('cad_nome', c.nome); Utils.setVal('cad_cnpj', c.cnpj); Utils.setVal('cad_endereco', c.endereco); Utils.setVal('cad_cidade', c.cidade); Utils.setVal('cad_telefone', c.telefone); Utils.setVal('cad_whatsapp', c.whatsapp); Utils.setVal('cad_email', c.email || ''); Utils.setVal('cad_responsavel_nome', c.responsavel_nome || ''); Utils.setVal('cad_responsavel_telefone', c.responsavel_telefone || ''); var container = $('equipamentosList'); if (container) container.innerHTML = ''; if (c.equipamentos && c.equipamentos.length) { c.equipamentos.forEach(function(eq) { adicionarCampoEquipamento(eq.marca, eq.modelo, eq.serie, eq.qtd, eq.combustivel); }); } var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'inline-flex'; showToast('Editando cliente'); },
   delete: function(id) { if (!confirm('Excluir este cliente?')) return; State.clients = State.clients.filter(function(c) { return c.id !== id; }); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluido'); },
   cancelEdit: function() { State.editingClientId = null; this.clearForm(); var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; },
   clearForm: function() { ['cad_nome','cad_cnpj','cad_endereco','cad_cidade','cad_telefone','cad_whatsapp','cad_email','cad_responsavel_nome','cad_responsavel_telefone'].forEach(function(id) { Utils.setVal(id, ''); }); var container = $('equipamentosList'); if (container) container.innerHTML = ''; },
-  exportCSV: function() { var csv = "Nome,CNPJ,Endereco,Cidade,Telefone,WhatsApp,Email,Responsavel,TelefoneResponsavel,Marcas\n"; State.clients.forEach(function(c) { var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join('; '); csv += '"' + c.nome + '",' + (c.cnpj || '') + ',"' + (c.endereco || '') + '","' + (c.cidade || '') + '",' + (c.telefone || '') + ',' + (c.whatsapp || '') + ',' + (c.email || '') + ',' + (c.responsavel_nome || '') + ',' + (c.responsavel_telefone || '') + ',"' + marcasLista + '"\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('Clientes exportados'); },
+  exportCSV: function() { var csv = "Nome,CNPJ,Endereco,Cidade,Telefone,WhatsApp,Email,Responsavel,TelefoneResponsavel,Marcas\n"; State.clients.forEach(function(c) { var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join('; '); csv += '"' + (c.nome || '') + '",' + (c.cnpj || '') + ',"' + (c.endereco || '') + '","' + (c.cidade || '') + '",' + (c.telefone || '') + ',' + (c.whatsapp || '') + ',' + (c.email || '') + ',' + (c.responsavel_nome || '') + ',' + (c.responsavel_telefone || '') + ',"' + marcasLista + '"\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('Clientes exportados'); },
   importCSV: function() { var input = document.createElement('input'); input.type = 'file'; input.accept = '.csv'; input.onchange = function(e) { var file = e.target.files[0]; var reader = new FileReader(); reader.onload = function(ev) { var lines = ev.target.result.split('\n'); for (var i = 1; i < lines.length; i++) { if (!lines[i].trim()) continue; var parts = lines[i].split(','); if (parts[0]) { var nome = parts[0].replace(/"/g, ''); var cliente = { id: Date.now() + i, nome: nome, cnpj: parts[1] || '', endereco: (parts[2] || '').replace(/"/g, ''), cidade: (parts[3] || '').replace(/"/g, ''), telefone: parts[4] || '', whatsapp: parts[5] || '', email: parts[6] || '', responsavel_nome: parts[7] || '', responsavel_telefone: parts[8] || '', equipamentos: [] }; State.clients.push(cliente); } } Storage.saveClients(); Clientes.renderTable(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file, 'UTF-8'); }; input.click(); }
 };
 
@@ -495,23 +552,25 @@ var Historico = {
   clear: function() { if (!confirm('Limpar TODO o historico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Historico limpo'); }
 };
 
-// ==================== INTEGRAÇÃO COM GOOGLE SHEETS ====================
+// ==================== INTEGRAÇÃO COM GOOGLE SHEETS (COM PROXY CORS) ====================
 const GoogleSheets = {
   url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyIN-Q9gqrixOAJsg_rarhzngKE8aZz9JUH2kZ8fpCCISYCQbqm_1t-RRUmt4FVA6Y34S5XsPg9u4k/pub?output=csv',
-  clientesRemotos: [],
   
   async fetchClientes() {
     try {
-      const response = await fetch(this.url);
+      showToast('🔄 Carregando planilha...');
+      // Usando proxy CORS para funcionar no Chrome
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(this.url);
+      const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error('Erro HTTP: ' + response.status);
       const csvText = await response.text();
-      this.clientesRemotos = this.parseCSV(csvText);
-      this.mergeClientes();
-      showToast(`✅ ${this.clientesRemotos.length} clientes carregados da planilha!`);
-      return this.clientesRemotos;
+      const clientes = this.parseCSV(csvText);
+      this.mergeClientes(clientes);
+      showToast(`✅ ${clientes.length} clientes carregados da planilha!`);
+      return clientes;
     } catch (error) {
       console.error('Erro no Google Sheets:', error);
-      showToast('⚠️ Não foi possível carregar planilha. Verifique se a planilha está publicada como CSV.', true);
+      showToast('⚠️ Não foi possível carregar planilha. Verifique se está publicada.', true);
       return [];
     }
   },
@@ -537,12 +596,12 @@ const GoogleSheets = {
         cliente[cab] = valor;
       });
       
-      if (cliente.nome) {
+      if (cliente.nome && cliente.nome.trim()) {
         cliente.id = Date.now() + i;
-        // Se a planilha tiver colunas de equipamento, usa elas
-        if (cliente.marca || cliente.modelo || cliente.serie) {
+        // Se tiver campos de equipamento, cria um
+        if (cliente.marca && cliente.marca.trim()) {
           cliente.equipamentos = [{
-            marca: cliente.marca || '',
+            marca: cliente.marca,
             modelo: cliente.modelo || '',
             serie: cliente.serie || '',
             qtd: cliente.qtd || 1,
@@ -577,16 +636,15 @@ const GoogleSheets = {
     return resultado;
   },
   
-  mergeClientes() {
-    if (!this.clientesRemotos.length) return;
+  mergeClientes(clientesPlanilha) {
+    if (!clientesPlanilha.length) return;
     
     const clientesExistentesMap = new Map();
     State.clients.forEach(c => clientesExistentesMap.set(c.nome, c));
     
-    this.clientesRemotos.forEach(clientePlanilha => {
+    clientesPlanilha.forEach(clientePlanilha => {
       if (clientesExistentesMap.has(clientePlanilha.nome)) {
         const existente = clientesExistentesMap.get(clientePlanilha.nome);
-        // Atualiza dados básicos
         existente.cnpj = clientePlanilha.cnpj || existente.cnpj;
         existente.endereco = clientePlanilha.endereco || existente.endereco;
         existente.cidade = clientePlanilha.cidade || existente.cidade;
@@ -595,13 +653,12 @@ const GoogleSheets = {
         existente.email = clientePlanilha.email || existente.email;
         existente.responsavel_nome = clientePlanilha.responsavel_nome || existente.responsavel_nome;
         existente.responsavel_telefone = clientePlanilha.responsavel_telefone || existente.responsavel_telefone;
-        // Adiciona equipamento se veio da planilha
         if (clientePlanilha.equipamentos && clientePlanilha.equipamentos.length > 0) {
           if (!existente.equipamentos) existente.equipamentos = [];
           clientePlanilha.equipamentos.forEach(eqNovo => {
-            const existe = existente.equipamentos.some(eq => eq.marca === eqNovo.marca && eq.modelo === eqNovo.modelo);
-            if (!existe && eqNovo.marca) {
-              existente.equipamentos.push(eqNovo);
+            if (eqNovo.marca) {
+              const existe = existente.equipamentos.some(eq => eq.marca === eqNovo.marca && eq.modelo === eqNovo.modelo);
+              if (!existe) existente.equipamentos.push(eqNovo);
             }
           });
         }
@@ -617,7 +674,6 @@ const GoogleSheets = {
   },
   
   async recarregar() {
-    showToast('🔄 Recarregando clientes da planilha...');
     await this.fetchClientes();
   }
 };
@@ -640,10 +696,10 @@ var App = {
       State.currentStatus = 'abertura'; 
       this.updateUI(); 
       
-      // Carregar planilha sem travar (assíncrono)
+      // Carregar planilha após 1 segundo (não bloqueia)
       setTimeout(function() {
         GoogleSheets.fetchClientes();
-      }, 500);
+      }, 1000);
       
       var loading = $('loadingOverlay'); 
       if (loading) loading.style.display = 'none'; 
@@ -672,7 +728,6 @@ var App = {
         equipList.appendChild(div);
       });
     } else {
-      // Se não tem equipamentos, carrega só os dados do cliente
       equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado. Clique em "Selecionar" para carregar apenas os dados do cliente.</div>';
       var btnSimples = document.createElement('button');
       btnSimples.className = 'btn btn-primary w-full mt-2';
@@ -720,10 +775,10 @@ var App = {
     if (tabOsBtn) tabOsBtn.click();
   },
   fecharModalEquip: function() { $('equipModal').style.display = 'none'; },
-  populateMarcas: function() { var select = $('marcaSelect'); if (!select) return; select.innerHTML = '<option value="">Selecione</option>'; Config.marcas.forEach(function(m) { select.innerHTML += '<option value="' + m + '">' + m + '</option>'; }); },
+  populateMarcas: function() { var select = $('marcaSelect'); if (!select) return; select.innerHTML = '<option value="">Selecione</option>'; Config.marcas.forEach(function(m) { if (m !== 'OUTRA') select.innerHTML += '<option value="' + m + '">' + m + '</option>'; }); select.innerHTML += '<option value="OUTRA">OUTRA</option>'; },
   setupMarcaSelect: function() { var select = $('marcaSelect'), div = $('marcaOutraDiv'), input = $('marcaOutra'); if (!select || !div || !input) return; select.addEventListener('change', function() { div.style.display = select.value === 'OUTRA' ? 'block' : 'none'; if (select.value === 'OUTRA') input.focus(); Utils.setVal('marca', select.value === 'OUTRA' ? input.value.toUpperCase() : select.value); }); input.addEventListener('input', function() { Utils.setVal('marca', input.value.toUpperCase()); }); },
   setupTabs: function() { var tabs = document.querySelectorAll('.tab-button'); var contents = document.querySelectorAll('.tab-content'); tabs.forEach(function(tab) { tab.addEventListener('click', function() { var targetId = this.getAttribute('data-tab'); if (!targetId) return; tabs.forEach(function(t) { t.classList.remove('active'); }); contents.forEach(function(c) { c.classList.remove('active'); }); this.classList.add('active'); var target = document.getElementById(targetId); if (target) target.classList.add('active'); }); }); },
-  setupSearch: function() { var histSearch = $('historicoSearch'); if (histSearch) histSearch.addEventListener('input', function() { Historico.render(); }); var tipoFiltro = $('historicoFiltroTipo'); if (tipoFiltro) tipoFiltro.addEventListener('change', function() { Historico.render(); }); var statusFiltro = $('historicoFiltroStatus'); if (statusFiltro) statusFiltro.addEventListener('change', function() { Historico.render(); }); var searchInput = $('cad_searchInput'); if (searchInput) { searchInput.addEventListener('input', function(e) { var search = e.target.value.toLowerCase(); var filtered = State.clients.filter(function(c) { return c.nome.toLowerCase().indexOf(search) !== -1 || (c.cidade && c.cidade.toLowerCase().indexOf(search) !== -1); }); var original = State.clients; State.clients = filtered; Clientes.renderTable(); State.clients = original; }); } },
+  setupSearch: function() { var histSearch = $('historicoSearch'); if (histSearch) histSearch.addEventListener('input', function() { Historico.render(); }); var tipoFiltro = $('historicoFiltroTipo'); if (tipoFiltro) tipoFiltro.addEventListener('change', function() { Historico.render(); }); var statusFiltro = $('historicoFiltroStatus'); if (statusFiltro) statusFiltro.addEventListener('change', function() { Historico.render(); }); var searchInput = $('cad_searchInput'); if (searchInput) { searchInput.addEventListener('input', function(e) { var search = e.target.value.toLowerCase(); var filtered = State.clients.filter(function(c) { return (c.nome && c.nome.toLowerCase().indexOf(search) !== -1) || (c.cidade && c.cidade.toLowerCase().indexOf(search) !== -1); }); var original = State.clients; State.clients = filtered; Clientes.renderTable(); State.clients = original; }); } },
   updateUI: function() { var isAbertura = State.currentStatus === 'abertura'; var isExecucao = State.currentStatus === 'execucao'; var isFinalizacao = State.currentStatus === 'finalizacao'; var isFechada = State.currentStatus === 'fechada'; var isAprovada = State.currentStatus === 'aprovada'; var btnIniciar = $('btnIniciarExecucao'); if (btnIniciar) btnIniciar.disabled = !isAbertura; var btnFinalizar = $('btnFinalizar'); if (btnFinalizar) btnFinalizar.disabled = !isExecucao; var btnFechar = $('btnFecharOS'); if (btnFechar) btnFechar.disabled = !isFinalizacao; var btnAprovar = $('btnAprovar'); if (btnAprovar) btnAprovar.disabled = !isFechada; var btnPDF = $('btnPreviaPDF'); var btnEmail = $('btnEnviarEmail'); if (btnPDF) btnPDF.disabled = !isAprovada; if (btnEmail) btnEmail.disabled = !isAprovada; var editFields = ['descricaoServico','pecasAplicadas','pendencias','horasExtras','adicionalNoturno','modelo','numSerie','horimetro']; editFields.forEach(function(id) { var el = $(id); if (el) el.disabled = isFechada || isAprovada; }); var marcaSelect = $('marcaSelect'); if (marcaSelect) marcaSelect.disabled = isFechada || isAprovada; var badge = $('statusBadge'); if (badge) { badge.className = 'status-badge'; var statusConfig = { abertura: {text:'EM ABERTURA', class:'status-abertura'}, execucao: {text:'EM EXECUCAO', class:'status-execucao'}, finalizacao: {text:'FINALIZANDO', class:'status-finalizacao'}, fechada: {text:'FECHADA', class:'status-fechada'}, aprovada: {text:'APROVADA', class:'status-aprovada'} }; var cfg = statusConfig[State.currentStatus]; badge.textContent = cfg.text; badge.classList.add(cfg.class); } var steps = ['abertura','execucao','finalizacao','fechada','aprovada']; document.querySelectorAll('.step').forEach(function(step, idx) { step.classList.remove('active','completed','locked'); if (steps[idx] === State.currentStatus) step.classList.add('active'); else if (steps.indexOf(State.currentStatus) > idx) step.classList.add(steps[idx] === 'fechada' && State.currentStatus === 'aprovada' ? 'locked' : 'completed'); }); },
   coletarDados: function() { var data = {}; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') data[el.id] = el.value; }); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { data[cb.id] = cb.checked; }); document.querySelectorAll('#checklistSections select').forEach(function(sel) { data[sel.id] = sel.value; }); var marcaSelect = $('marcaSelect').value, marcaOutra = $('marcaOutra').value; data.marca = marcaSelect === 'OUTRA' ? marcaOutra.toUpperCase() : marcaSelect; return data; },
   salvar: function() { Signature.save('tec'); Signature.save('cli'); var data = this.coletarDados(); data.status = State.currentStatus; data.fotosBase64 = State.fotosServico; data.fotoHorimetro = State.fotoHorimetro; data.fotosPendencias = State.fotosPendencias; data.assinaturaTecnico = Utils.getVal('assinaturaTecnicoData'); data.assinaturaCliente = Utils.getVal('assinaturaClienteData'); Horas.calcular(); data.horasTotais = Utils.getVal('horasTotais'); data.totalGeral = Utils.getVal('totalGeral'); if (!data.numeroOS) { data.numeroOS = Utils.generateOSNumber(); } try { var idx = State.osHistory.findIndex(function(os) { return os.numeroOS === data.numeroOS; }); if (idx >= 0) { State.osHistory[idx] = data; } else { State.osHistory.unshift(data); } Storage.saveOSHistory(); State.hasUnsavedChanges = false; Historico.updateStats(); Clientes.updateStats(); return true; } catch (e) { showToast('Erro ao salvar', true); return false; } },
