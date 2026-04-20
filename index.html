@@ -261,7 +261,7 @@
 </div>
 
 <script>
-// ==================== SISTEMA v6.0 COM LOCALSTORAGE ====================
+// ==================== SISTEMA v6.0 COM LOCALSTORAGE E GOOGLE SHEETS ====================
 var Config = {
   marcas: ["TOYOTA","CLARK","BYD","PALETRANS","LINDE","HYSTER","YALE","CATERPILLAR","KOMATSU","MITSUBISHI","NISSAN","STILL","CROWN","JUNGHEINRICH","TCM","HYUNDAI","DOOSAN","HELI","HANGCHA","LONKING","OUTRA"],
   checklist: [ { id:'motor', title:'Motor e Componentes', items:[{id:'motor_oleo',label:'Nivel de oleo do motor'},{id:'motor_filtro_oleo',label:'Filtro de oleo'},{id:'motor_filtro_ar',label:'Filtro de ar'},{id:'motor_filtro_comb',label:'Filtro de combustivel'},{id:'motor_correias',label:'Correias'},{id:'motor_radiador',label:'Radiador'}] }, { id:'eletrico', title:'Sistema Eletrico', items:[{id:'eletr_bateria',label:'Bateria'},{id:'eletr_terminais',label:'Terminais'},{id:'eletr_alternador',label:'Alternador'},{id:'eletr_partida',label:'Motor de partida'},{id:'eletr_farois',label:'Farois'},{id:'eletr_buzina',label:'Buzina'}] }, { id:'hidraulico', title:'Sistema Hidraulico', items:[{id:'hidr_oleo',label:'Nivel oleo hidraulico'},{id:'hidr_bomba',label:'Bomba hidraulica'},{id:'hidr_cilindros',label:'Cilindros'},{id:'hidr_vazamentos',label:'Vazamentos'},{id:'hidr_mangueiras',label:'Mangueiras'}] }, { id:'transmissao', title:'Transmissao e Freios', items:[{id:'trans_oleo',label:'Oleo transmissao'},{id:'freio_servico',label:'Freio de servico'},{id:'freio_estac',label:'Freio de estacionamento'},{id:'freio_pastilhas',label:'Pastilhas/Lonas'}] }, { id:'direcao', title:'Direcao', items:[{id:'dir_volante',label:'Volante'},{id:'dir_caixa',label:'Caixa de direcao'},{id:'dir_hidraulica',label:'Direcao hidraulica'}] }, { id:'estrutura', title:'Estrutura e Garfos', items:[{id:'est_mastros',label:'Mastros'},{id:'est_correntes',label:'Correntes'},{id:'est_garfos',label:'Garfos'},{id:'est_roletes',label:'Roletes'}] }, { id:'seguranca', title:'Seguranca', items:[{id:'seg_cinto',label:'Cinto de seguranca'},{id:'seg_extintor',label:'Extintor'},{id:'seg_espelhos',label:'Espelhos'},{id:'seg_alarme',label:'Alarme de re'}] } ],
@@ -455,7 +455,7 @@ var Checklist = {
 var Clientes = { 
   load: function() { State.clients = Storage.loadClients(); this.renderTable(); this.updateStats(); },
   updateStats: function() { var totalClientes = State.clients.length; var totalMarcas = 0; State.clients.forEach(function(c) { totalMarcas += (c.equipamentos || []).length; }); var clientesComOS = new Set(); var totalOS = 0; var osAbertas = 0; var osAprovadas = 0; State.osHistory.forEach(function(os) { if (os.cliente) { clientesComOS.add(os.cliente); totalOS++; } if (os.status === 'abertura' || os.status === 'execucao' || os.status === 'finalizacao') osAbertas++; if (os.status === 'aprovada') osAprovadas++; }); $('statTotalClientes').innerText = totalClientes; $('statTotalMarcas').innerText = totalMarcas; $('statClientesComOS').innerText = clientesComOS.size; $('statTotalOSClientes').innerText = totalOS; $('statOSAbertasCliente').innerText = osAbertas; $('statOSAprovadasCliente').innerText = osAprovadas; },
-  renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + c.nome + '<\/td><td class="p-2">' + (c.cidade || '-') + '<\/td><td class="p-2">' + (marcasLista || '-') + '<\/td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i><\/td>'; }); },
+  renderTable: function() { var tbody = $('cad_tableBody'); if (!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + c.nome + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
   addEquipField: function(marca, modelo, serie, qtd, combustivel) { marca = marca || ''; modelo = modelo || ''; serie = serie || ''; qtd = qtd || 1; combustivel = combustivel || ''; var container = $('equipamentosList'); if (!container) return; var div = document.createElement('div'); div.className = 'equip-item'; var options = Config.marcas.map(function(m) { return '<option value="' + m + '"' + (marca === m ? ' selected' : '') + '>' + m + '</option>'; }).join(''); div.innerHTML = '<select class="form-input w-24 equip-marca">' + options + '<option value="OUTRA">OUTRA</option></select><div class="outra-marca-container" style="display:none"><input type="text" placeholder="Outra marca" class="form-input w-24 outra-marca"></div><input type="text" placeholder="Modelo" class="form-input w-24 equip-modelo" value="' + modelo + '"><input type="text" placeholder="Serie" class="form-input w-24 equip-serie" value="' + serie + '"><input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="' + qtd + '"><select class="form-input w-28 equip-combustivel"><option value="">Combustível</option><option value="eletrico" ' + (combustivel === 'eletrico' ? 'selected' : '') + '>Elétrico</option><option value="diesel" ' + (combustivel === 'diesel' ? 'selected' : '') + '>Diesel</option><option value="gasolina" ' + (combustivel === 'gasolina' ? 'selected' : '') + '>Gasolina</option><option value="glp" ' + (combustivel === 'glp' ? 'selected' : '') + '>GLP</option></select><button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>'; container.appendChild(div); var select = div.querySelector('.equip-marca'); var outraDiv = div.querySelector('.outra-marca-container'); select.addEventListener('change', function() { outraDiv.style.display = select.value === 'OUTRA' ? 'block' : 'none'; }); if (marca && Config.marcas.indexOf(marca) === -1) { select.value = 'OUTRA'; div.querySelector('.outra-marca').value = marca; outraDiv.style.display = 'block'; } },
   save: function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marca = item.querySelector('.equip-marca').value; var outra = item.querySelector('.outra-marca') ? item.querySelector('.outra-marca').value : ''; equipamentos.push({ marca: marca === 'OUTRA' ? outra.toUpperCase() : marca, modelo: item.querySelector('.equip-modelo').value, serie: item.querySelector('.equip-serie').value, qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value }); }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); },
   select: function(id) { 
@@ -485,7 +485,7 @@ var Clientes = {
 var Historico = { 
   load: function() { State.osHistory = Storage.loadOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); },
   updateStats: function() { var total = State.osHistory.length; var statusAbertura = 0, statusExecucao = 0, statusFinalizacao = 0, statusFechada = 0, statusAprovada = 0; var tipoEmergencial = 0, tipoPreventiva = 0, tipoCorretiva = 0, tipoGarantia = 0, tipoNormal = 0, tipoAvaliacao = 0, tipoOrcamento = 0; var esteMes = 0; var now = new Date(); var mesAtual = now.getMonth(), anoAtual = now.getFullYear(); State.osHistory.forEach(function(os) { if (os.status === 'abertura') statusAbertura++; else if (os.status === 'execucao') statusExecucao++; else if (os.status === 'finalizacao') statusFinalizacao++; else if (os.status === 'fechada') statusFechada++; else if (os.status === 'aprovada') statusAprovada++; if (os.tipoChamado === 'emergencial') tipoEmergencial++; else if (os.tipoChamado === 'preventiva') tipoPreventiva++; else if (os.tipoChamado === 'corretiva') tipoCorretiva++; else if (os.tipoChamado === 'garantia') tipoGarantia++; else if (os.tipoChamado === 'normal') tipoNormal++; else if (os.tipoChamado === 'avaliacao') tipoAvaliacao++; else if (os.tipoChamado === 'orcamento') tipoOrcamento++; if (os.dataOS) { var d = new Date(os.dataOS); if (d.getMonth() === mesAtual && d.getFullYear() === anoAtual) esteMes++; } }); $('statTotalOS').innerText = total; $('statStatusAbertura').innerText = statusAbertura; $('statStatusExecucao').innerText = statusExecucao; $('statStatusFinalizacao').innerText = statusFinalizacao; $('statStatusFechada').innerText = statusFechada; $('statStatusAprovada').innerText = statusAprovada; $('statTipoEmergencial').innerText = tipoEmergencial; $('statTipoPreventiva').innerText = tipoPreventiva; $('statTipoCorretiva').innerText = tipoCorretiva; $('statTipoGarantia').innerText = tipoGarantia; $('statTipoNormal').innerText = tipoNormal; $('statTipoAvaliacao').innerText = tipoAvaliacao; $('statTipoOrcamento').innerText = tipoOrcamento; $('statEsteMes').innerText = esteMes; },
-  render: function() { var search = Utils.getVal('historicoSearch').toLowerCase(); var tipo = Utils.getVal('historicoFiltroTipo'); var statusFiltro = Utils.getVal('historicoFiltroStatus'); var filtered = State.osHistory.filter(function(os) { var matchSearch = !search || (os.numeroOS && os.numeroOS.toLowerCase().indexOf(search) !== -1) || (os.cliente && os.cliente.toLowerCase().indexOf(search) !== -1); var matchTipo = !tipo || os.tipoChamado === tipo; var matchStatus = !statusFiltro || os.status === statusFiltro; return matchSearch && matchTipo && matchStatus; }); var tbody = $('historicoTableBody'), empty = $('historicoEmpty'); if (!tbody) return; tbody.innerHTML = ''; if (filtered.length === 0) { if (empty) empty.classList.remove('hidden'); return; } if (empty) empty.classList.add('hidden'); filtered.forEach(function(os) { var row = tbody.insertRow(); var statusClass = 'status-' + (os.status || 'abertura'); var statusText = Utils.formatStatus(os.status); row.innerHTML = '<td class="font-mono font-bold">' + (os.numeroOS || '-') + '<\/td><td class="p-2">' + (os.dataOS || '-') + '<\/td><td class="font-medium">' + (os.cliente || '-').toUpperCase() + '<\/td><td class="p-2"><span class="status-badge ' + statusClass + '">' + statusText + '<\/span><\/td><td class="font-mono font-bold text-[var(--success)]">' + (os.horasTotais || '-') + '<\/td><td class="p-2"><button onclick="Historico.view(\'' + os.numeroOS + '\')" class="text-blue-400"><i class="fas fa-eye"></i></button> <button onclick="Historico.edit(\'' + os.numeroOS + '\')" class="text-orange-400 ml-2"><i class="fas fa-edit"></i></button> <button onclick="Historico.delete(\'' + os.numeroOS + '\')" class="text-red-400 ml-2"><i class="fas fa-trash"></i></button><\/td>'; }); },
+  render: function() { var search = Utils.getVal('historicoSearch').toLowerCase(); var tipo = Utils.getVal('historicoFiltroTipo'); var statusFiltro = Utils.getVal('historicoFiltroStatus'); var filtered = State.osHistory.filter(function(os) { var matchSearch = !search || (os.numeroOS && os.numeroOS.toLowerCase().indexOf(search) !== -1) || (os.cliente && os.cliente.toLowerCase().indexOf(search) !== -1); var matchTipo = !tipo || os.tipoChamado === tipo; var matchStatus = !statusFiltro || os.status === statusFiltro; return matchSearch && matchTipo && matchStatus; }); var tbody = $('historicoTableBody'), empty = $('historicoEmpty'); if (!tbody) return; tbody.innerHTML = ''; if (filtered.length === 0) { if (empty) empty.classList.remove('hidden'); return; } if (empty) empty.classList.add('hidden'); filtered.forEach(function(os) { var row = tbody.insertRow(); var statusClass = 'status-' + (os.status || 'abertura'); var statusText = Utils.formatStatus(os.status); row.innerHTML = '<td class="font-mono font-bold">' + (os.numeroOS || '-') + '</td><td class="p-2">' + (os.dataOS || '-') + '</td><td class="font-medium">' + (os.cliente || '-').toUpperCase() + '</td><td class="p-2"><span class="status-badge ' + statusClass + '">' + statusText + '<\/span></td><td class="font-mono font-bold text-[var(--success)]">' + (os.horasTotais || '-') + '</td><td class="p-2"><button onclick="Historico.view(\'' + os.numeroOS + '\')" class="text-blue-400"><i class="fas fa-eye"></i></button> <button onclick="Historico.edit(\'' + os.numeroOS + '\')" class="text-orange-400 ml-2"><i class="fas fa-edit"></i></button> <button onclick="Historico.delete(\'' + os.numeroOS + '\')" class="text-red-400 ml-2"><i class="fas fa-trash"></i></button></td>'; }); },
   view: function(num) { var os = State.osHistory.find(function(o) { return o.numeroOS === num; }); if (!os) return; State.currentStatus = os.status || 'abertura'; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') el.value = ''; }); for (var key in os) { if (['fotosBase64','fotoHorimetro','fotosPendencias','assinaturaTecnico','assinaturaCliente'].indexOf(key) === -1) Utils.setVal(key, os[key]); } if (os.fotoHorimetro) { State.fotoHorimetro = os.fotoHorimetro; var preview = $('fotoHorimetroPreview'); if (preview) preview.innerHTML = '<div class="photo-item"><img src="' + os.fotoHorimetro + '"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>'; } else Fotos.removeHorimetro(); if (os.fotosBase64 && os.fotosBase64.length) { State.fotosServico = os.fotosBase64; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; os.fotosBase64.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosServico = []; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; } if (os.fotosPendencias && os.fotosPendencias.length) { State.fotosPendencias = os.fotosPendencias; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; os.fotosPendencias.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosPendencias = []; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; } Signature.loadFromData('tec', os.assinaturaTecnico); Signature.loadFromData('cli', os.assinaturaCliente); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { cb.checked = os[cb.id] === true; }); App.updateUI(); showToast('OS carregada'); var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]'); if (tabOsBtn) tabOsBtn.click(); },
   edit: function(num) { this.view(num); },
   delete: function(num) { if (!confirm('Excluir OS ' + num + '?')) return; State.osHistory = State.osHistory.filter(function(o) { return o.numeroOS !== num; }); Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('OS excluida'); },
@@ -493,6 +493,117 @@ var Historico = {
   importCSV: function() { var input = document.createElement('input'); input.type = 'file'; input.accept = '.csv'; input.onchange = function(e) { var file = e.target.files[0]; var reader = new FileReader(); reader.onload = function(ev) { var lines = ev.target.result.split('\n'); for (var i = 1; i < lines.length; i++) { if (!lines[i].trim()) continue; var parts = lines[i].split(','); if (parts[0]) { var os = { numeroOS: parts[0] || 'OS-' + Date.now() + '-' + i, dataOS: parts[1] || '', cliente: (parts[2] || '').replace(/"/g, ''), status: (parts[3] || '').toLowerCase() || 'abertura', tipoChamado: (parts[4] || '').toLowerCase() || 'normal', horasTotais: parts[5] || '0h', totalGeral: parts[6] || '00:00', descricaoServico: '', pecasAplicadas: '', pendencias: '', relatoCliente: '', marca: '', modelo: '', numSerie: '', horimetro: '', combustivel: '', whatsappCliente: '', cnpj: '', cidadeCliente: '', endereco: '', tecnico: 'LEONARDO MARTINS', recebedor: '', fotosBase64: [], fotoHorimetro: null, fotosPendencias: [], assinaturaTecnico: '', assinaturaCliente: '' }; State.osHistory.push(os); } } Storage.saveOSHistory(); Historico.render(); Historico.updateStats(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file, 'UTF-8'); }; input.click(); },
   clear: function() { if (!confirm('Limpar TODO o historico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Historico limpo'); }
 };
+
+// ==================== INTEGRAÇÃO COM GOOGLE SHEETS ====================
+const GoogleSheets = {
+  url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyIN-Q9gqrixOAJsg_rarhzngKE8aZz9JUH2kZ8fpCCISYCQbqm_1t-RRUmt4FVA6Y34S5XsPg9u4k/pub?output=csv',
+  clientesRemotos: [],
+  
+  async fetchClientes() {
+    try {
+      const response = await fetch(this.url);
+      if (!response.ok) throw new Error('Erro HTTP: ' + response.status);
+      const csvText = await response.text();
+      this.clientesRemotos = this.parseCSV(csvText);
+      this.mergeClientes();
+      showToast(`✅ ${this.clientesRemotos.length} clientes carregados da planilha!`);
+      return this.clientesRemotos;
+    } catch (error) {
+      console.error('Erro no Google Sheets:', error);
+      showToast('⚠️ Não foi possível carregar planilha. Verifique o link e se a planilha está publicada.', true);
+      return [];
+    }
+  },
+  
+  parseCSV(csv) {
+    const linhas = csv.split(/\r?\n/);
+    if (linhas.length < 2) return [];
+    
+    const cabecalhos = linhas[0].split(',').map(h => h.trim().toLowerCase());
+    const clientes = [];
+    
+    for (let i = 1; i < linhas.length; i++) {
+      if (!linhas[i].trim()) continue;
+      
+      const valores = this.quebraCSV(linhas[i]);
+      const cliente = {};
+      
+      cabecalhos.forEach((cab, idx) => {
+        let valor = valores[idx] ? valores[idx].trim() : '';
+        if (valor.startsWith('"') && valor.endsWith('"')) {
+          valor = valor.slice(1, -1);
+        }
+        cliente[cab] = valor;
+      });
+      
+      if (cliente.nome) {
+        cliente.id = Date.now() + i;
+        cliente.equipamentos = [];
+        clientes.push(cliente);
+      }
+    }
+    return clientes;
+  },
+  
+  quebraCSV(linha) {
+    const resultado = [];
+    let dentroAspas = false;
+    let valorAtual = '';
+    
+    for (let i = 0; i < linha.length; i++) {
+      const char = linha[i];
+      if (char === '"') {
+        dentroAspas = !dentroAspas;
+      } else if (char === ',' && !dentroAspas) {
+        resultado.push(valorAtual);
+        valorAtual = '';
+      } else {
+        valorAtual += char;
+      }
+    }
+    resultado.push(valorAtual);
+    return resultado;
+  },
+  
+  mergeClientes() {
+    if (!this.clientesRemotos.length) return;
+    
+    const clientesExistentesMap = new Map();
+    State.clients.forEach(c => clientesExistentesMap.set(c.nome, c));
+    
+    this.clientesRemotos.forEach(clientePlanilha => {
+      if (clientesExistentesMap.has(clientePlanilha.nome)) {
+        const existente = clientesExistentesMap.get(clientePlanilha.nome);
+        Object.assign(existente, clientePlanilha);
+      } else {
+        State.clients.push(clientePlanilha);
+      }
+    });
+    
+    Storage.saveClients();
+    Clientes.renderTable();
+    Clientes.updateStats();
+    Historico.updateStats();
+  },
+  
+  async recarregar() {
+    showToast('🔄 Recarregando clientes da planilha...');
+    await this.fetchClientes();
+  }
+};
+
+// Função para adicionar botão de recarga
+function adicionarBotaoRecarga() {
+  const header = document.querySelector('header .flex.flex-wrap.gap-2');
+  if (header && !document.getElementById('btnRecargaPlanilha')) {
+    const btn = document.createElement('button');
+    btn.id = 'btnRecargaPlanilha';
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Carregar Planilha';
+    btn.className = 'btn btn-secondary text-sm';
+    btn.onclick = () => GoogleSheets.recarregar();
+    header.appendChild(btn);
+  }
+}
 
 var App = { 
   init: function() { 
@@ -511,6 +622,13 @@ var App = {
       this.setupSearch(); 
       State.currentStatus = 'abertura'; 
       this.updateUI(); 
+      adicionarBotaoRecarga();
+      
+      // Carregar planilha sem travar (opcional, assíncrono)
+      setTimeout(function() {
+        GoogleSheets.fetchClientes();
+      }, 500);
+      
       var loading = $('loadingOverlay'); 
       if (loading) loading.style.display = 'none'; 
       var container = $('appContainer'); 
@@ -525,17 +643,21 @@ var App = {
     var modal = $('equipModal');
     var equipList = $('equipList');
     equipList.innerHTML = '';
-    cliente.equipamentos.forEach(function(eq, idx) {
-      var div = document.createElement('div');
-      div.className = 'equip-option';
-      div.innerHTML = '<div><strong><i class="fas fa-forklift"></i> ' + eq.marca + ' ' + eq.modelo + '</strong></div>' +
-        '<div class="text-sm text-[var(--muted)]">Série: ' + (eq.serie || 'N/A') + ' | Qtd: ' + eq.qtd + ' | Combustível: ' + (eq.combustivel || 'N/A') + '</div>';
-      div.onclick = function() {
-        App.carregarEquipamento(eq, cliente);
-        modal.style.display = 'none';
-      };
-      equipList.appendChild(div);
-    });
+    if (cliente.equipamentos && cliente.equipamentos.length > 0) {
+      cliente.equipamentos.forEach(function(eq, idx) {
+        var div = document.createElement('div');
+        div.className = 'equip-option';
+        div.innerHTML = '<div><strong><i class="fas fa-forklift"></i> ' + eq.marca + ' ' + eq.modelo + '</strong></div>' +
+          '<div class="text-sm text-[var(--muted)]">Série: ' + (eq.serie || 'N/A') + ' | Qtd: ' + eq.qtd + ' | Combustível: ' + (eq.combustivel || 'N/A') + '</div>';
+        div.onclick = function() {
+          App.carregarEquipamento(eq, cliente);
+          modal.style.display = 'none';
+        };
+        equipList.appendChild(div);
+      });
+    } else {
+      equipList.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento cadastrado</div>';
+    }
     modal.style.display = 'flex';
   },
   carregarEquipamento: function(equip, cliente) {
@@ -595,130 +717,6 @@ var App = {
   abrirMapa: function() { var end = Utils.getVal('endereco'); if (end) window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(end)); else showToast('Informe o endereço primeiro.', true); },
   sendWhatsAppMessage: function() { var numero = prompt('WhatsApp com DDD:', Utils.getVal('whatsappCliente')); if (!numero) return; var msg = this.getResumoEmail(); window.open('https://wa.me/' + numero.replace(/\D/g, '') + '?text=' + encodeURIComponent(msg)); }
 };
-
-// ==================== INTEGRAÇÃO COM GOOGLE SHEETS ====================
-const GoogleSheets = {
-  url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRyIN-Q9gqrixOAJsg_rarhzngKE8aZz9JUH2kZ8fpCCISYCQbqm_1t-RRUmt4FVA6Y34S5XsPg9u4k/pub?output=csv', // ATUALIZE COM SEU LINK
-  clientesRemotos: [],
-  
-  // Buscar dados do CSV
-  async fetchClientes() {
-    try {
-      const response = await fetch(this.url);
-      if (!response.ok) throw new Error('Erro ao acessar planilha');
-      const csvText = await response.text();
-      this.clientesRemotos = this.parseCSV(csvText);
-      this.mergeClientes();
-      showToast(`✅ ${this.clientesRemotos.length} clientes carregados da planilha!`);
-      return this.clientesRemotos;
-    } catch (error) {
-      console.error('Erro no Google Sheets:', error);
-      showToast('⚠️ Não foi possível carregar planilha. Verifique o link.', true);
-      return [];
-    }
-  },
-  
-  // Converter CSV para array de objetos
-  parseCSV(csv) {
-    const linhas = csv.split(/\r?\n/);
-    if (linhas.length < 2) return [];
-    
-    const cabecalhos = linhas[0].split(',').map(h => h.trim().toLowerCase());
-    const clientes = [];
-    
-    for (let i = 1; i < linhas.length; i++) {
-      if (!linhas[i].trim()) continue;
-      
-      // Quebra respeitando aspas (para campos com vírgula)
-      const valores = this.quebraCSV(linhas[i]);
-      const cliente = {};
-      
-      cabecalhos.forEach((cab, idx) => {
-        let valor = valores[idx] ? valores[idx].trim() : '';
-        // Remove aspas se existirem
-        if (valor.startsWith('"') && valor.endsWith('"')) {
-          valor = valor.slice(1, -1);
-        }
-        cliente[cab] = valor;
-      });
-      
-      // Só adiciona se tiver pelo menos o nome
-      if (cliente.nome) {
-        cliente.id = Date.now() + i; // ID único temporário
-        cliente.equipamentos = cliente.equipamentos ? JSON.parse(cliente.equipamentos) : [];
-        clientes.push(cliente);
-      }
-    }
-    return clientes;
-  },
-  
-  // Função auxiliar para quebrar CSV com aspas
-  quebraCSV(linha) {
-    const resultado = [];
-    let dentroAspas = false;
-    let valorAtual = '';
-    
-    for (let i = 0; i < linha.length; i++) {
-      const char = linha[i];
-      if (char === '"') {
-        dentroAspas = !dentroAspas;
-      } else if (char === ',' && !dentroAspas) {
-        resultado.push(valorAtual);
-        valorAtual = '';
-      } else {
-        valorAtual += char;
-      }
-    }
-    resultado.push(valorAtual);
-    return resultado;
-  },
-  
-  // Mesclar clientes da planilha com os já cadastrados (evitar duplicatas por nome)
-  mergeClientes() {
-    if (!this.clientesRemotos.length) return;
-    
-    // Criar um mapa de clientes existentes (por nome)
-    const clientesExistentesMap = new Map();
-    State.clients.forEach(c => clientesExistentesMap.set(c.nome, c));
-    
-    // Adicionar ou atualizar com os dados da planilha
-    this.clientesRemotos.forEach(clientePlanilha => {
-      if (clientesExistentesMap.has(clientePlanilha.nome)) {
-        // Atualiza dados do cliente existente (mantém ID original)
-        const existente = clientesExistentesMap.get(clientePlanilha.nome);
-        Object.assign(existente, clientePlanilha);
-      } else {
-        // Adiciona novo cliente
-        State.clients.push(clientePlanilha);
-      }
-    });
-    
-    // Salvar no localStorage e recarregar interface
-    Storage.saveClients();
-    Clientes.renderTable();
-    Clientes.updateStats();
-    Historico.updateStats();
-  },
-  
-  // Forçar recarga manual (botão extra)
-  async recarregar() {
-    showToast('🔄 Recarregando clientes da planilha...');
-    await this.fetchClientes();
-  }
-};
-
-// Adicionar botão de recarga na interface (opcional, mas útil)
-function adicionarBotaoRecarga() {
-  const header = document.querySelector('header .flex.flex-wrap.gap-2');
-  if (header && !document.getElementById('btnRecargaPlanilha')) {
-    const btn = document.createElement('button');
-    btn.id = 'btnRecargaPlanilha';
-    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Recarregar Planilha';
-    btn.className = 'btn btn-secondary text-sm';
-    btn.onclick = () => GoogleSheets.recarregar();
-    header.appendChild(btn);
-  }
-}
 
 document.addEventListener('DOMContentLoaded', function() { App.init(); });
 </script>
