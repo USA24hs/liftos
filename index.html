@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data:; style-src * 'unsafe-inline';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Marlift Empilhadeiras - OS Profissional v6.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -472,8 +473,14 @@ var Checklist = {
   updateProgress: function() { var checkboxes = document.querySelectorAll('input[data-check="true"]'); this.checked = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length; var pct = this.total > 0 ? Math.round((this.checked / this.total) * 100) : 0; var progText = $('progressText'); if (progText) progText.textContent = pct + '%'; var fill = $('progressFill'); if (fill) fill.style.width = pct + '%'; }
 };
 
-// SINCRONIZAÇÃO ONLINE COM GOOGLE SHEETS - CORREÇÃO CORS
+// SINCRONIZACAO COM GOOGLE SHEETS - VERSAO COM PROXY CORS
 var GoogleSheets = {
+  // Usar proxy CORS para contornar restrições do GitHub Pages
+  getProxyUrl: function() {
+    // Usar CORS-Anywhere como proxy (gratuito e confiável)
+    return 'https://cors-anywhere.herokuapp.com/';
+  },
+  
   // Sincronizar dados para a nuvem
   syncToCloud: async function() {
     try {
@@ -492,50 +499,85 @@ var GoogleSheets = {
         timestamp: new Date().toISOString()
       };
       
-      var response = await fetch(Config.googleSheetUrl, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          action: 'sync',
-          data: dataToSync
-        })
-      });
-      
-      if (response && response.ok) {
-        var result = await response.json();
-        if (result && result.success) {
-          State.lastSync = new Date().toISOString();
-          localStorage.setItem('marlift_last_sync', State.lastSync);
-          showToast('✅ Dados sincronizados com sucesso!');
-          GoogleSheets.updateSyncStatus(true);
-        } else {
-          showToast('⚠️ Erro na sincronização: ' + (result.error || 'Erro desconhecido'), true);
-          GoogleSheets.updateSyncStatus(false);
+      // TENTATIVA 1: Sem proxy (pode funcionar em alguns casos)
+      try {
+        var response = await fetch(Config.googleSheetUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync', data: dataToSync })
+        });
+        
+        if (response && response.ok) {
+          var result = await response.json();
+          if (result && result.success) {
+            State.lastSync = new Date().toISOString();
+            localStorage.setItem('marlift_last_sync', State.lastSync);
+            showToast('✅ Dados sincronizados com sucesso!');
+            GoogleSheets.updateSyncStatus(true);
+            return;
+          }
         }
-      } else {
-        throw new Error('Erro na resposta do servidor');
+        throw new Error('Falha na sincronização direta');
+      } catch(directError) {
+        console.log('Sincronização direta falhou, tentando com proxy...', directError);
+        
+        // TENTATIVA 2: Com proxy CORS
+        var proxyUrl = GoogleSheets.getProxyUrl();
+        var response2 = await fetch(proxyUrl + Config.googleSheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync', data: dataToSync })
+        });
+        
+        if (response2 && response2.ok) {
+          var result2 = await response2.json();
+          if (result2 && result2.success) {
+            State.lastSync = new Date().toISOString();
+            localStorage.setItem('marlift_last_sync', State.lastSync);
+            showToast('✅ Dados sincronizados com sucesso (via proxy)!');
+            GoogleSheets.updateSyncStatus(true);
+            return;
+          }
+        }
+        throw new Error('Falha na sincronização via proxy');
       }
       
     } catch (error) {
       console.error('Erro na sincronização:', error);
-      showToast('❌ Erro ao sincronizar. Verifique sua conexão com a internet.', true);
-      GoogleSheets.updateSyncStatus(false);
+      showToast('❌ Erro ao sincronizar. Tentando método alternativo...', true);
       
-      // Salvar pendência para tentar depois
-      localStorage.setItem('marlift_pending_sync', JSON.stringify({
-        clients: State.clients,
-        osHistory: State.osHistory,
-        osCounter: State.osCounter,
-        timestamp: new Date().toISOString()
-      }));
+      // TENTATIVA 3: Abrir em nova janela (fallback)
+      var dataStr = JSON.stringify({
+        action: 'sync',
+        data: dataToSync
+      });
+      
+      // Criar formulário para enviar
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = Config.googleSheetUrl;
+      form.target = '_blank';
+      
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'data';
+      input.value = dataStr;
+      form.appendChild(input);
+      
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
+      showToast('📤 Abrindo nova janela para sincronização...', false);
+      GoogleSheets.updateSyncStatus(false);
       
     } finally {
       if (syncBtn) {
-        syncBtn.disabled = false;
-        syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizar Agora';
+        setTimeout(() => {
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizar Agora';
+        }, 2000);
       }
     }
   },
@@ -551,98 +593,127 @@ var GoogleSheets = {
         loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
       }
       
-      var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response && response.ok) {
-        var result = await response.json();
+      // Tentativa 1: Sem proxy
+      try {
+        var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
+          method: 'GET',
+          mode: 'cors'
+        });
         
-        if (result && result.success && result.data) {
-          var loadedCount = 0;
-          
-          // Carregar clientes
-          if (result.data.clients && Array.isArray(result.data.clients) && result.data.clients.length > 0) {
-            State.clients = result.data.clients;
-            Storage.saveClients();
-            Clientes.load();
-            loadedCount += result.data.clients.length;
-            showToast(`📋 ${result.data.clients.length} clientes carregados`, false);
-          }
-          
-          // Carregar histórico de OS
-          if (result.data.osHistory && Array.isArray(result.data.osHistory) && result.data.osHistory.length > 0) {
-            State.osHistory = result.data.osHistory;
-            Storage.saveOSHistory();
-            Historico.load();
-            loadedCount += result.data.osHistory.length;
-            showToast(`📝 ${result.data.osHistory.length} OS carregadas`, false);
-          }
-          
-          // Carregar contador
-          if (result.data.osCounter !== undefined && result.data.osCounter > 0) {
-            State.osCounter = result.data.osCounter;
-            Storage.saveCounter();
-          }
-          
-          if (loadedCount > 0) {
-            showToast(`✅ ${loadedCount} registros carregados da nuvem!`);
-            App.updateUI();
-            Historico.render();
-            Clientes.renderTable();
+        if (response && response.ok) {
+          var result = await response.json();
+          if (result && result.success && result.data) {
+            await GoogleSheets.processLoadedData(result.data);
+            showToast('✅ Dados carregados da nuvem!');
             GoogleSheets.updateSyncStatus(true);
-          } else {
-            showToast('📭 Nenhum dado encontrado na nuvem. Faça o primeiro backup!', true);
+            return;
           }
-          
-        } else {
-          showToast('📭 Nenhum dado encontrado na nuvem', true);
         }
-      } else {
-        throw new Error('Erro na resposta do servidor');
+        throw new Error('Falha no carregamento direto');
+      } catch(directError) {
+        console.log('Carregamento direto falhou, tentando com proxy...', directError);
+        
+        // Tentativa 2: Com proxy
+        var proxyUrl = GoogleSheets.getProxyUrl();
+        var response2 = await fetch(proxyUrl + Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
+          method: 'GET'
+        });
+        
+        if (response2 && response2.ok) {
+          var result2 = await response2.json();
+          if (result2 && result2.success && result2.data) {
+            await GoogleSheets.processLoadedData(result2.data);
+            showToast('✅ Dados carregados da nuvem (via proxy)!');
+            GoogleSheets.updateSyncStatus(true);
+            return;
+          }
+        }
+        throw new Error('Falha no carregamento via proxy');
       }
       
     } catch (error) {
       console.error('Erro ao carregar:', error);
-      showToast('❌ Erro ao carregar dados da nuvem. Verifique sua conexão.', true);
+      showToast('❌ Erro ao carregar. Verifique sua conexão.', true);
       GoogleSheets.updateSyncStatus(false);
+      
+      // Tentar carregar dados locais como fallback
+      var pendingSync = localStorage.getItem('marlift_pending_sync');
+      if (pendingSync) {
+        if (confirm('Não foi possível conectar à nuvem. Deseja carregar dados locais?')) {
+          var pending = JSON.parse(pendingSync);
+          await GoogleSheets.processLoadedData({
+            clients: pending.clients || [],
+            osHistory: pending.osHistory || [],
+            osCounter: pending.osCounter || 0
+          });
+          showToast('📱 Dados locais carregados', false);
+        }
+      }
       
     } finally {
       if (loadBtn) {
-        loadBtn.disabled = false;
-        loadBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Carregar da Nuvem';
+        setTimeout(() => {
+          loadBtn.disabled = false;
+          loadBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Carregar da Nuvem';
+        }, 2000);
       }
     }
+  },
+  
+  // Processar dados carregados
+  processLoadedData: async function(data) {
+    var loadedCount = 0;
+    
+    if (data.clients && Array.isArray(data.clients) && data.clients.length > 0) {
+      State.clients = data.clients;
+      Storage.saveClients();
+      Clientes.load();
+      loadedCount += data.clients.length;
+      showToast(`📋 ${data.clients.length} clientes carregados`, false);
+    }
+    
+    if (data.osHistory && Array.isArray(data.osHistory) && data.osHistory.length > 0) {
+      State.osHistory = data.osHistory;
+      Storage.saveOSHistory();
+      Historico.load();
+      loadedCount += data.osHistory.length;
+      showToast(`📝 ${data.osHistory.length} OS carregadas`, false);
+    }
+    
+    if (data.osCounter !== undefined && data.osCounter > 0) {
+      State.osCounter = data.osCounter;
+      Storage.saveCounter();
+    }
+    
+    if (loadedCount > 0) {
+      App.updateUI();
+      Historico.render();
+      Clientes.renderTable();
+    }
+    
+    return loadedCount;
   },
   
   // Verificar status da conexão
   checkConnection: async function() {
     try {
-      var response = await fetch(Config.googleSheetUrl + '?action=ping&t=' + Date.now(), {
+      var response = await fetch('https://cors-anywhere.herokuapp.com/' + Config.googleSheetUrl + '?action=ping&t=' + Date.now(), {
         method: 'GET',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Origin': window.location.origin }
       });
       
       if (response && response.ok) {
         State.isOnline = true;
         GoogleSheets.updateSyncStatus(true);
-        showToast('✅ Conexão com a nuvem estabelecida', false);
         return true;
       } else {
         State.isOnline = false;
         GoogleSheets.updateSyncStatus(false);
-        showToast('⚠️ Conexão com a nuvem instável', true);
         return false;
       }
     } catch (error) {
       State.isOnline = false;
       GoogleSheets.updateSyncStatus(false);
-      showToast('❌ Sem conexão com a nuvem', true);
       return false;
     }
   },
@@ -654,34 +725,14 @@ var GoogleSheets = {
     if (dot && text) {
       if (isOnline) {
         dot.className = 'sync-dot online';
-        text.textContent = 'Online - Sincronizado';
+        text.textContent = '✅ Online - Sincronizado';
       } else {
         dot.className = 'sync-dot offline';
-        text.textContent = 'Offline - Clique para sincronizar';
-      }
-    }
-  },
-  
-  // Tentar sincronizar dados pendentes
-  retryPendingSync: async function() {
-    var pendingSync = localStorage.getItem('marlift_pending_sync');
-    if (pendingSync) {
-      showToast('🔄 Tentando sincronizar dados pendentes...', false);
-      var pending = JSON.parse(pendingSync);
-      State.clients = pending.clients || State.clients;
-      State.osHistory = pending.osHistory || State.osHistory;
-      State.osCounter = pending.osCounter || State.osCounter;
-      
-      await GoogleSheets.syncToCloud();
-      
-      if (State.lastSync) {
-        localStorage.removeItem('marlift_pending_sync');
-        showToast('✅ Dados pendentes sincronizados!', false);
+        text.textContent = '⚠️ Offline - Clique em "Sincronizar Agora"';
       }
     }
   }
 };
-
 // Sincronização automática a cada 30 segundos quando online
 setInterval(async function() {
   if (State.isOnline && (State.osHistory.length > 0 || State.clients.length > 0)) {
