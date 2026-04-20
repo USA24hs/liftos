@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data:; style-src * 'unsafe-inline';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Marlift Empilhadeiras - OS Profissional v6.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -283,8 +282,7 @@ var Config = {
   marcas: ["TOYOTA","CLARK","BYD","PALETRANS","LINDE","HYSTER","YALE","CATERPILLAR","KOMATSU","MITSUBISHI","NISSAN","STILL","CROWN","JUNGHEINRICH","TCM","HYUNDAI","DOOSAN","HELI","HANGCHA","LONKING","OUTRA"],
   checklist: [ { id:'motor', title:'Motor e Componentes', items:[{id:'motor_oleo',label:'Nivel de oleo do motor'},{id:'motor_filtro_oleo',label:'Filtro de oleo'},{id:'motor_filtro_ar',label:'Filtro de ar'},{id:'motor_filtro_comb',label:'Filtro de combustivel'},{id:'motor_correias',label:'Correias'},{id:'motor_radiador',label:'Radiador'}] }, { id:'eletrico', title:'Sistema Eletrico', items:[{id:'eletr_bateria',label:'Bateria'},{id:'eletr_terminais',label:'Terminais'},{id:'eletr_alternador',label:'Alternador'},{id:'eletr_partida',label:'Motor de partida'},{id:'eletr_farois',label:'Farois'},{id:'eletr_buzina',label:'Buzina'}] }, { id:'hidraulico', title:'Sistema Hidraulico', items:[{id:'hidr_oleo',label:'Nivel oleo hidraulico'},{id:'hidr_bomba',label:'Bomba hidraulica'},{id:'hidr_cilindros',label:'Cilindros'},{id:'hidr_vazamentos',label:'Vazamentos'},{id:'hidr_mangueiras',label:'Mangueiras'}] }, { id:'transmissao', title:'Transmissao e Freios', items:[{id:'trans_oleo',label:'Oleo transmissao'},{id:'freio_servico',label:'Freio de servico'},{id:'freio_estac',label:'Freio de estacionamento'},{id:'freio_pastilhas',label:'Pastilhas/Lonas'}] }, { id:'direcao', title:'Direcao', items:[{id:'dir_volante',label:'Volante'},{id:'dir_caixa',label:'Caixa de direcao'},{id:'dir_hidraulica',label:'Direcao hidraulica'}] }, { id:'estrutura', title:'Estrutura e Garfos', items:[{id:'est_mastros',label:'Mastros'},{id:'est_correntes',label:'Correntes'},{id:'est_garfos',label:'Garfos'},{id:'est_roletes',label:'Roletes'}] }, { id:'seguranca', title:'Seguranca', items:[{id:'seg_cinto',label:'Cinto de seguranca'},{id:'seg_extintor',label:'Extintor'},{id:'seg_espelhos',label:'Espelhos'},{id:'seg_alarme',label:'Alarme de re'}] } ],
   maxFotos: 10,
-  // IMPORTANTE: Substitua esta URL pela URL do seu Google Apps Script APÓS implantar
-  googleSheetUrl: 'https://script.google.com/macros/s/AKfycbwp6vFDJBk8zfI7SRp5jnZIdBAM0-x5scYTR0fu8MzaifNa5jZFz-pkU28V8dH6Q-SY/exec'
+  googleSheetUrl: 'https://script.google.com/macros/s/AKfycbxaruTuaeEexgJGH_gqVKxEFp1qaID_XcKWMJwXS6frkyupwtl_aah3halvhZIF9m7Bjw/exec'
 };
 
 var State = { 
@@ -473,15 +471,8 @@ var Checklist = {
   updateProgress: function() { var checkboxes = document.querySelectorAll('input[data-check="true"]'); this.checked = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length; var pct = this.total > 0 ? Math.round((this.checked / this.total) * 100) : 0; var progText = $('progressText'); if (progText) progText.textContent = pct + '%'; var fill = $('progressFill'); if (fill) fill.style.width = pct + '%'; }
 };
 
-// SINCRONIZACAO COM GOOGLE SHEETS - VERSAO COM PROXY CORS
+// Google Sheets Sync - Versão Corrigida
 var GoogleSheets = {
-  // Usar proxy CORS para contornar restrições do GitHub Pages
-  getProxyUrl: function() {
-    // Usar CORS-Anywhere como proxy (gratuito e confiável)
-    return 'https://cors-anywhere.herokuapp.com/';
-  },
-  
-  // Sincronizar dados para a nuvem
   syncToCloud: async function() {
     try {
       showToast('☁️ Enviando dados para a nuvem...');
@@ -499,78 +490,29 @@ var GoogleSheets = {
         timestamp: new Date().toISOString()
       };
       
-      // TENTATIVA 1: Sem proxy (pode funcionar em alguns casos)
-      try {
-        var response = await fetch(Config.googleSheetUrl, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'sync', data: dataToSync })
-        });
-        
-        if (response && response.ok) {
-          var result = await response.json();
-          if (result && result.success) {
-            State.lastSync = new Date().toISOString();
-            localStorage.setItem('marlift_last_sync', State.lastSync);
-            showToast('✅ Dados sincronizados com sucesso!');
-            GoogleSheets.updateSyncStatus(true);
-            return;
-          }
-        }
-        throw new Error('Falha na sincronização direta');
-      } catch(directError) {
-        console.log('Sincronização direta falhou, tentando com proxy...', directError);
-        
-        // TENTATIVA 2: Com proxy CORS
-        var proxyUrl = GoogleSheets.getProxyUrl();
-        var response2 = await fetch(proxyUrl + Config.googleSheetUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'sync', data: dataToSync })
-        });
-        
-        if (response2 && response2.ok) {
-          var result2 = await response2.json();
-          if (result2 && result2.success) {
-            State.lastSync = new Date().toISOString();
-            localStorage.setItem('marlift_last_sync', State.lastSync);
-            showToast('✅ Dados sincronizados com sucesso (via proxy)!');
-            GoogleSheets.updateSyncStatus(true);
-            return;
-          }
-        }
-        throw new Error('Falha na sincronização via proxy');
-      }
+      var response = await fetch(Config.googleSheetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', data: dataToSync })
+      });
+      
+      showToast('✅ Dados enviados para sincronização!');
+      State.lastSync = new Date().toISOString();
+      localStorage.setItem('marlift_last_sync', State.lastSync);
+      GoogleSheets.updateSyncStatus(true);
       
     } catch (error) {
       console.error('Erro na sincronização:', error);
-      showToast('❌ Erro ao sincronizar. Tentando método alternativo...', true);
-      
-      // TENTATIVA 3: Abrir em nova janela (fallback)
-      var dataStr = JSON.stringify({
-        action: 'sync',
-        data: dataToSync
-      });
-      
-      // Criar formulário para enviar
-      var form = document.createElement('form');
-      form.method = 'POST';
-      form.action = Config.googleSheetUrl;
-      form.target = '_blank';
-      
-      var input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'data';
-      input.value = dataStr;
-      form.appendChild(input);
-      
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-      
-      showToast('📤 Abrindo nova janela para sincronização...', false);
+      showToast('⚠️ Dados salvos localmente. Sincronize quando tiver conexão.', true);
       GoogleSheets.updateSyncStatus(false);
+      
+      localStorage.setItem('marlift_pending_sync', JSON.stringify({
+        clients: State.clients,
+        osHistory: State.osHistory,
+        osCounter: State.osCounter,
+        timestamp: new Date().toISOString()
+      }));
       
     } finally {
       if (syncBtn) {
@@ -582,7 +524,6 @@ var GoogleSheets = {
     }
   },
   
-  // Carregar dados da nuvem
   loadFromCloud: async function() {
     try {
       showToast('☁️ Carregando dados da nuvem...');
@@ -593,61 +534,72 @@ var GoogleSheets = {
         loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
       }
       
-      // Tentativa 1: Sem proxy
-      try {
-        var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
-          method: 'GET',
-          mode: 'cors'
-        });
+      var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
+        method: 'GET',
+        mode: 'cors'
+      });
+      
+      if (response && response.ok) {
+        var result = await response.json();
         
-        if (response && response.ok) {
-          var result = await response.json();
-          if (result && result.success && result.data) {
-            await GoogleSheets.processLoadedData(result.data);
-            showToast('✅ Dados carregados da nuvem!');
-            GoogleSheets.updateSyncStatus(true);
-            return;
+        if (result && result.success && result.data) {
+          var loadedCount = 0;
+          
+          if (result.data.clients && Array.isArray(result.data.clients) && result.data.clients.length > 0) {
+            State.clients = result.data.clients;
+            Storage.saveClients();
+            Clientes.load();
+            loadedCount += result.data.clients.length;
+            showToast(`📋 ${result.data.clients.length} clientes carregados`, false);
           }
-        }
-        throw new Error('Falha no carregamento direto');
-      } catch(directError) {
-        console.log('Carregamento direto falhou, tentando com proxy...', directError);
-        
-        // Tentativa 2: Com proxy
-        var proxyUrl = GoogleSheets.getProxyUrl();
-        var response2 = await fetch(proxyUrl + Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
-          method: 'GET'
-        });
-        
-        if (response2 && response2.ok) {
-          var result2 = await response2.json();
-          if (result2 && result2.success && result2.data) {
-            await GoogleSheets.processLoadedData(result2.data);
-            showToast('✅ Dados carregados da nuvem (via proxy)!');
-            GoogleSheets.updateSyncStatus(true);
-            return;
+          
+          if (result.data.osHistory && Array.isArray(result.data.osHistory) && result.data.osHistory.length > 0) {
+            State.osHistory = result.data.osHistory;
+            Storage.saveOSHistory();
+            Historico.load();
+            loadedCount += result.data.osHistory.length;
+            showToast(`📝 ${result.data.osHistory.length} OS carregadas`, false);
           }
+          
+          if (result.data.osCounter !== undefined && result.data.osCounter > 0) {
+            State.osCounter = result.data.osCounter;
+            Storage.saveCounter();
+          }
+          
+          if (loadedCount > 0) {
+            showToast(`✅ ${loadedCount} registros carregados da nuvem!`);
+            App.updateUI();
+            Historico.render();
+            Clientes.renderTable();
+            GoogleSheets.updateSyncStatus(true);
+          } else {
+            showToast('📭 Nenhum dado encontrado na nuvem', true);
+          }
+        } else {
+          showToast('📭 Nenhum dado encontrado na nuvem', true);
         }
-        throw new Error('Falha no carregamento via proxy');
+      } else {
+        throw new Error('Erro na resposta do servidor');
       }
       
     } catch (error) {
       console.error('Erro ao carregar:', error);
-      showToast('❌ Erro ao carregar. Verifique sua conexão.', true);
+      showToast('❌ Erro ao carregar dados da nuvem.', true);
       GoogleSheets.updateSyncStatus(false);
       
-      // Tentar carregar dados locais como fallback
       var pendingSync = localStorage.getItem('marlift_pending_sync');
-      if (pendingSync) {
-        if (confirm('Não foi possível conectar à nuvem. Deseja carregar dados locais?')) {
-          var pending = JSON.parse(pendingSync);
-          await GoogleSheets.processLoadedData({
-            clients: pending.clients || [],
-            osHistory: pending.osHistory || [],
-            osCounter: pending.osCounter || 0
-          });
-          showToast('📱 Dados locais carregados', false);
-        }
+      if (pendingSync && confirm('Dados locais encontrados. Deseja carregá-los?')) {
+        var pending = JSON.parse(pendingSync);
+        if (pending.clients) State.clients = pending.clients;
+        if (pending.osHistory) State.osHistory = pending.osHistory;
+        if (pending.osCounter) State.osCounter = pending.osCounter;
+        Storage.saveClients();
+        Storage.saveOSHistory();
+        Storage.saveCounter();
+        Clientes.load();
+        Historico.load();
+        App.updateUI();
+        showToast('📱 Dados locais carregados', false);
       }
       
     } finally {
@@ -660,46 +612,11 @@ var GoogleSheets = {
     }
   },
   
-  // Processar dados carregados
-  processLoadedData: async function(data) {
-    var loadedCount = 0;
-    
-    if (data.clients && Array.isArray(data.clients) && data.clients.length > 0) {
-      State.clients = data.clients;
-      Storage.saveClients();
-      Clientes.load();
-      loadedCount += data.clients.length;
-      showToast(`📋 ${data.clients.length} clientes carregados`, false);
-    }
-    
-    if (data.osHistory && Array.isArray(data.osHistory) && data.osHistory.length > 0) {
-      State.osHistory = data.osHistory;
-      Storage.saveOSHistory();
-      Historico.load();
-      loadedCount += data.osHistory.length;
-      showToast(`📝 ${data.osHistory.length} OS carregadas`, false);
-    }
-    
-    if (data.osCounter !== undefined && data.osCounter > 0) {
-      State.osCounter = data.osCounter;
-      Storage.saveCounter();
-    }
-    
-    if (loadedCount > 0) {
-      App.updateUI();
-      Historico.render();
-      Clientes.renderTable();
-    }
-    
-    return loadedCount;
-  },
-  
-  // Verificar status da conexão
   checkConnection: async function() {
     try {
-      var response = await fetch('https://cors-anywhere.herokuapp.com/' + Config.googleSheetUrl + '?action=ping&t=' + Date.now(), {
+      var response = await fetch(Config.googleSheetUrl + '?action=load&t=' + Date.now(), {
         method: 'GET',
-        headers: { 'Origin': window.location.origin }
+        mode: 'cors'
       });
       
       if (response && response.ok) {
@@ -718,7 +635,6 @@ var GoogleSheets = {
     }
   },
   
-  // Atualizar indicador de status
   updateSyncStatus: function(isOnline) {
     var dot = $('syncDot');
     var text = $('syncText');
@@ -728,34 +644,52 @@ var GoogleSheets = {
         text.textContent = '✅ Online - Sincronizado';
       } else {
         dot.className = 'sync-dot offline';
-        text.textContent = '⚠️ Offline - Clique em "Sincronizar Agora"';
+        text.textContent = '⚠️ Offline - Dados salvos localmente';
+      }
+    }
+  },
+  
+  retryPendingSync: async function() {
+    var pendingSync = localStorage.getItem('marlift_pending_sync');
+    if (pendingSync) {
+      showToast('🔄 Tentando sincronizar dados pendentes...', false);
+      var pending = JSON.parse(pendingSync);
+      State.clients = pending.clients || State.clients;
+      State.osHistory = pending.osHistory || State.osHistory;
+      State.osCounter = pending.osCounter || State.osCounter;
+      
+      await GoogleSheets.syncToCloud();
+      
+      if (State.lastSync) {
+        localStorage.removeItem('marlift_pending_sync');
+        showToast('✅ Dados pendentes sincronizados!', false);
       }
     }
   }
 };
-// Sincronização automática a cada 30 segundos quando online
+
+// Sincronização automática a cada 60 segundos
 setInterval(async function() {
   if (State.isOnline && (State.osHistory.length > 0 || State.clients.length > 0)) {
     var lastSync = localStorage.getItem('marlift_last_sync');
     var now = Date.now();
-    if (!lastSync || (now - parseInt(lastSync)) > 30000) { // 30 segundos
+    if (!lastSync || (now - parseInt(lastSync)) > 60000) {
       await GoogleSheets.syncToCloud();
       localStorage.setItem('marlift_last_sync', now.toString());
     }
   }
-}, 30000);
+}, 60000);
 
 // Verificar conexão periodicamente
 setInterval(async function() {
   await GoogleSheets.checkConnection();
-}, 60000);
+}, 30000);
 
-// Verificar conexão inicial e tentar sincronizar pendências
+// Inicialização
 setTimeout(async function() {
   await GoogleSheets.checkConnection();
   if (State.isOnline) {
     await GoogleSheets.retryPendingSync();
-    await GoogleSheets.loadFromCloud();
   }
 }, 3000);
 
@@ -782,7 +716,7 @@ var Clientes = {
     }
   },
   edit: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; State.editingClientId = id; Utils.setVal('cad_nome', c.nome); Utils.setVal('cad_cnpj', c.cnpj); Utils.setVal('cad_endereco', c.endereco); Utils.setVal('cad_cidade', c.cidade); Utils.setVal('cad_telefone', c.telefone); Utils.setVal('cad_whatsapp', c.whatsapp); Utils.setVal('cad_email', c.email || ''); Utils.setVal('cad_responsavel_nome', c.responsavel_nome || ''); Utils.setVal('cad_responsavel_telefone', c.responsavel_telefone || ''); var container = $('equipamentosList'); if (container) container.innerHTML = ''; if (c.equipamentos && c.equipamentos.length) { c.equipamentos.forEach(function(eq) { Clientes.addEquipField(eq.marca, eq.modelo, eq.serie, eq.qtd, eq.combustivel); }); } var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'inline-flex'; showToast('Editando cliente'); },
-  delete: function(id) { if (!confirm('Excluir este cliente?')) return; State.clients = State.clients.filter(function(c) { return c.id !== id; }); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluido'); },
+  delete: function(id) { if (!confirm('Excluir este cliente?')) return; State.clients = State.clients.filter(function(c) { return c.id !== id; }); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluído'); },
   cancelEdit: function() { State.editingClientId = null; this.clearForm(); var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; },
   clearForm: function() { ['cad_nome','cad_cnpj','cad_endereco','cad_cidade','cad_telefone','cad_whatsapp','cad_email','cad_responsavel_nome','cad_responsavel_telefone'].forEach(function(id) { Utils.setVal(id, ''); }); var container = $('equipamentosList'); if (container) container.innerHTML = ''; },
   exportCSV: function() { var csv = "Nome,CNPJ,Endereco,Cidade,Telefone,WhatsApp,Email,Responsavel,TelefoneResponsavel,Marcas\n"; State.clients.forEach(function(c) { var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join('; '); csv += '"' + c.nome + '",' + (c.cnpj || '') + ',"' + (c.endereco || '') + '","' + (c.cidade || '') + '",' + (c.telefone || '') + ',' + (c.whatsapp || '') + ',' + (c.email || '') + ',' + (c.responsavel_nome || '') + ',' + (c.responsavel_telefone || '') + ',"' + marcasLista + '"\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clientes_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('Clientes exportados'); },
@@ -795,10 +729,10 @@ var Historico = {
   render: function() { var search = Utils.getVal('historicoSearch').toLowerCase(); var tipo = Utils.getVal('historicoFiltroTipo'); var statusFiltro = Utils.getVal('historicoFiltroStatus'); var filtered = State.osHistory.filter(function(os) { var matchSearch = !search || (os.numeroOS && os.numeroOS.toLowerCase().indexOf(search) !== -1) || (os.cliente && os.cliente.toLowerCase().indexOf(search) !== -1); var matchTipo = !tipo || os.tipoChamado === tipo; var matchStatus = !statusFiltro || os.status === statusFiltro; return matchSearch && matchTipo && matchStatus; }); var tbody = $('historicoTableBody'), empty = $('historicoEmpty'); if (!tbody) return; tbody.innerHTML = ''; if (filtered.length === 0) { if (empty) empty.classList.remove('hidden'); return; } if (empty) empty.classList.add('hidden'); filtered.forEach(function(os) { var row = tbody.insertRow(); var statusClass = 'status-' + (os.status || 'abertura'); var statusText = Utils.formatStatus(os.status); row.innerHTML = '<td class="font-mono font-bold">' + (os.numeroOS || '-') + '</td><td class="p-2">' + (os.dataOS || '-') + '</td><td class="font-medium">' + (os.cliente || '-').toUpperCase() + '</td><td class="p-2"><span class="status-badge ' + statusClass + '">' + statusText + '</span></td><td class="font-mono font-bold text-[var(--success)]">' + (os.horasTotais || '-') + '</td><td class="p-2"><button onclick="Historico.view(\'' + os.numeroOS + '\')" class="text-blue-400"><i class="fas fa-eye"></i></button> <button onclick="Historico.edit(\'' + os.numeroOS + '\')" class="text-orange-400 ml-2"><i class="fas fa-edit"></i></button> <button onclick="Historico.delete(\'' + os.numeroOS + '\')" class="text-red-400 ml-2"><i class="fas fa-trash"></i></button></td>'; }); },
   view: function(num) { var os = State.osHistory.find(function(o) { return o.numeroOS === num; }); if (!os) return; State.currentStatus = os.status || 'abertura'; document.querySelectorAll('#tab-os input, #tab-os select, #tab-os textarea').forEach(function(el) { if (el.id && el.type !== 'file') el.value = ''; }); for (var key in os) { if (['fotosBase64','fotoHorimetro','fotosPendencias','assinaturaTecnico','assinaturaCliente'].indexOf(key) === -1) Utils.setVal(key, os[key]); } if (os.fotoHorimetro) { State.fotoHorimetro = os.fotoHorimetro; var preview = $('fotoHorimetroPreview'); if (preview) preview.innerHTML = '<div class="photo-item"><img src="' + os.fotoHorimetro + '"><div class="photo-remove" onclick="Fotos.removeHorimetro()">x</div></div>'; } else Fotos.removeHorimetro(); if (os.fotosBase64 && os.fotosBase64.length) { State.fotosServico = os.fotosBase64; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; os.fotosBase64.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removeServico(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosServico = []; var preview = $('fotosPreview'); if (preview) preview.innerHTML = ''; } if (os.fotosPendencias && os.fotosPendencias.length) { State.fotosPendencias = os.fotosPendencias; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; os.fotosPendencias.forEach(function(src) { if (preview) { var div = document.createElement('div'); div.className = 'photo-item'; div.innerHTML = '<img src="' + src + '"><div class="photo-remove" onclick="Fotos.removePendencia(this)">x</div>'; preview.appendChild(div); } }); } else { State.fotosPendencias = []; var preview = $('fotosPendenciasPreview'); if (preview) preview.innerHTML = ''; } Signature.loadFromData('tec', os.assinaturaTecnico); Signature.loadFromData('cli', os.assinaturaCliente); document.querySelectorAll('input[data-check="true"]').forEach(function(cb) { cb.checked = os[cb.id] === true; }); App.updateUI(); showToast('OS carregada'); var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]'); if (tabOsBtn) tabOsBtn.click(); },
   edit: function(num) { this.view(num); },
-  delete: function(num) { if (!confirm('Excluir OS ' + num + '?')) return; State.osHistory = State.osHistory.filter(function(o) { return o.numeroOS !== num; }); Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('OS excluida'); },
+  delete: function(num) { if (!confirm('Excluir OS ' + num + '?')) return; State.osHistory = State.osHistory.filter(function(o) { return o.numeroOS !== num; }); Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('OS excluída'); },
   exportCSV: function() { var csv = 'OS,Data,Cliente,Status,Tipo,Horas,Total Geral\n'; State.osHistory.forEach(function(o) { csv += (o.numeroOS || '') + ',' + (o.dataOS || '') + ',"' + (o.cliente || '') + '",' + Utils.formatStatus(o.status) + ',' + (o.tipoChamado || '') + ',' + (o.horasTotais || '') + ',' + (o.totalGeral || '') + '\n'; }); var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'historico_os_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); showToast('CSV exportado'); },
   importCSV: function() { var input = document.createElement('input'); input.type = 'file'; input.accept = '.csv'; input.onchange = function(e) { var file = e.target.files[0]; var reader = new FileReader(); reader.onload = function(ev) { var lines = ev.target.result.split('\n'); for (var i = 1; i < lines.length; i++) { if (!lines[i].trim()) continue; var parts = lines[i].split(','); if (parts[0]) { var os = { numeroOS: parts[0] || 'OS-' + Date.now() + '-' + i, dataOS: parts[1] || '', cliente: (parts[2] || '').replace(/"/g, ''), status: (parts[3] || '').toLowerCase() || 'abertura', tipoChamado: (parts[4] || '').toLowerCase() || 'normal', horasTotais: parts[5] || '0h', totalGeral: parts[6] || '00:00', descricaoServico: '', pecasAplicadas: '', pendencias: '', relatoCliente: '', marca: '', modelo: '', numSerie: '', horimetro: '', combustivel: '', whatsappCliente: '', cnpj: '', cidadeCliente: '', endereco: '', tecnico: 'LEONARDO MARTINS', recebedor: '', fotosBase64: [], fotoHorimetro: null, fotosPendencias: [], assinaturaTecnico: '', assinaturaCliente: '' }; State.osHistory.push(os); } } Storage.saveOSHistory(); Historico.render(); Historico.updateStats(); Clientes.updateStats(); showToast('Importação concluída'); }; reader.readAsText(file, 'UTF-8'); }; input.click(); },
-  clear: function() { if (!confirm('Limpar TODO o historico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Historico limpo'); }
+  clear: function() { if (!confirm('Limpar TODO o histórico?')) return; State.osHistory = []; Storage.saveOSHistory(); this.render(); this.updateStats(); Clientes.updateStats(); showToast('Histórico limpo'); }
 };
 
 var App = { 
