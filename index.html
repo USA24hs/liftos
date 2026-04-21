@@ -1019,8 +1019,8 @@ const Auth = {
     const users = localStorage.getItem('marlift_users');
     if (users) return JSON.parse(users);
     const defaultUsers = [
-      { id: 1, nome: 'Administrador', login: 'admin', senha: 'admin123', nivel: 'admin' },
-      { id: 2, nome: 'Técnico Principal', login: 'tecnico', senha: '123456', nivel: 'tecnico' }
+      { id: 1, nome: 'Administrador', login: 'Leonardo', senha: 'N@ldo279', nivel: 'admin' },
+      { id: 2, nome: 'Técnico Principal', login: 'Anderson', senha: 'B@lu4891', nivel: 'tecnico' }
     ];
     localStorage.setItem('marlift_users', JSON.stringify(defaultUsers));
     return defaultUsers;
