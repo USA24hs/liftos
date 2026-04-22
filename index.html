@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <title>Marlift Empilhadeiras - OS Profissional v8.9</title>
+  <title>Marlift Empilhadeiras - OS Profissional v9.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* (estilos iguais aos anteriores - omitidos por brevidade, mas estão no código final) */
+    /* (estilos iguais aos anteriores - mantidos) */
     * { -webkit-tap-highlight-color: transparent; }
     :root {
       --bg: #0c0f12;
@@ -137,7 +137,7 @@
 <div id="appContainer" style="display:none;">
   <header class="no-print border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3">
-      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v8.9</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
+      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v9.0</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
       <div class="toolbar"><button onclick="App.gerarPreviaPDF()" id="btnPreviaPDF" class="btn btn-primary text-sm" disabled><i class="fas fa-file-pdf"></i> PDF</button><button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> E-mail</button><button onclick="App.sendWhatsAppMessage()" id="btnWhatsApp" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button><button onclick="App.novaOS()" id="btnNovaOS" class="btn btn-yellow text-sm"><i class="fas fa-plus"></i> Nova O.S</button><button onclick="GoogleSheetsSync.fullSync()" id="btnSync" class="btn btn-sync text-sm"><i class="fas fa-cloud-upload-alt"></i> Sincronizar</button><button onclick="GoogleSheetsSync.fetchFromSheet()" id="btnDownload" class="btn btn-secondary text-sm"><i class="fas fa-cloud-download-alt"></i> Baixar</button></div>
     </div>
   </header>
@@ -241,11 +241,11 @@ var Agendamentos = {
   carregar: function() { State.agendamentos = Storage.loadAgendamentos(); this.atualizarLista(); this.atualizarSelectTecnicos(); this.atualizarDatalistClientes(); },
   atualizarSelectTecnicos: function() { var select = document.getElementById('ag_tecnico'); if(!select) return; var users = Auth.getUsers(); var tecnicos = users.filter(u => u.nivel === 'tecnico'); select.innerHTML = '<option value="">Selecione</option>'; tecnicos.forEach(t => { select.innerHTML += `<option value="${t.login}">${t.nome}</option>`; }); },
   atualizarDatalistClientes: function() { var datalist = document.getElementById('clientesList'); if(!datalist) return; datalist.innerHTML = ''; State.clients.forEach(c => { var option = document.createElement('option'); option.value = c.nome; datalist.appendChild(option); }); },
-  salvar: function() { if(!Auth.isAdmin()){ showToast('Apenas administrador',true); return; } var cliente = document.getElementById('ag_cliente').value.trim(); var equip = document.getElementById('ag_equipamento').value.trim(); var data = document.getElementById('ag_data').value; var horario = document.getElementById('ag_horario').value; var tecnico = document.getElementById('ag_tecnico').value; var desc = document.getElementById('ag_descricao').value; if(!cliente || !data || !tecnico){ showToast('Cliente, data e técnico são obrigatórios',true); return; } var novo = { id: Date.now(), cliente, equipamento: equip, data, horario, tecnico, descricao: desc, status: 'pendente' }; State.agendamentos.push(novo); Storage.saveAgendamentos(); this.limparForm(); this.atualizarLista(); showToast('Agendamento salvo'); },
+  salvar: function() { if(!Auth.isAdmin()){ showToast('Apenas administrador',true); return; } var cliente = document.getElementById('ag_cliente').value.trim(); var equip = document.getElementById('ag_equipamento').value.trim(); var data = document.getElementById('ag_data').value; var horario = document.getElementById('ag_horario').value; var tecnico = document.getElementById('ag_tecnico').value; var desc = document.getElementById('ag_descricao').value; if(!cliente || !data || !tecnico){ showToast('Cliente, data e técnico são obrigatórios',true); return; } var novo = { id: Date.now(), cliente, equipamento: equip, data, horario, tecnico, descricao: desc, status: 'pendente' }; State.agendamentos.push(novo); Storage.saveAgendamentos(); this.limparForm(); this.atualizarLista(); showToast('Agendamento salvo'); GoogleSheetsSync.syncSingleAgendamento(novo); },
   limparForm: function() { document.getElementById('ag_cliente').value=''; document.getElementById('ag_equipamento').value=''; document.getElementById('ag_data').value=''; document.getElementById('ag_horario').value=''; document.getElementById('ag_tecnico').value=''; document.getElementById('ag_descricao').value=''; },
   atualizarLista: function() { var container = document.getElementById('agendamentosLista'); if(!container) return; var pendentes = State.agendamentos.filter(a => a.status !== 'concluido').sort((a,b)=> (a.data+''+a.horario).localeCompare(b.data+''+b.horario)); if(pendentes.length===0){ container.innerHTML='<div class="text-center p-4 text-[var(--muted)]">Nenhum agendamento pendente</div>'; return; } var html=''; pendentes.forEach(a=>{ html+=`<div class="schedule-card"><div class="flex justify-between items-start flex-wrap"><div><strong>${a.cliente}</strong> - ${a.equipamento || 'Equipamento não informado'}<br><small><i class="fas fa-calendar"></i> ${a.data} ${a.horario} | <i class="fas fa-user-cog"></i> ${a.tecnico}</small><br><small>${a.descricao || ''}</small></div><div><button onclick="Agendamentos.concluir(${a.id})" class="btn btn-success text-xs py-1 px-2"><i class="fas fa-check"></i> Concluir</button> <button onclick="Agendamentos.excluir(${a.id})" class="btn btn-danger text-xs py-1 px-2"><i class="fas fa-trash"></i></button></div></div></div>`; }); container.innerHTML=html; },
-  concluir: function(id) { var idx = State.agendamentos.findIndex(a=>a.id===id); if(idx!==-1){ State.agendamentos[idx].status='concluido'; Storage.saveAgendamentos(); this.atualizarLista(); showToast('Agendamento concluído'); } },
-  excluir: function(id) { if(confirm('Excluir este agendamento?')){ State.agendamentos = State.agendamentos.filter(a=>a.id!==id); Storage.saveAgendamentos(); this.atualizarLista(); showToast('Excluído'); } },
+  concluir: function(id) { var idx = State.agendamentos.findIndex(a=>a.id===id); if(idx!==-1){ State.agendamentos[idx].status='concluido'; Storage.saveAgendamentos(); this.atualizarLista(); showToast('Agendamento concluído'); GoogleSheetsSync.syncSingleAgendamento(State.agendamentos[idx]); } },
+  excluir: function(id) { if(confirm('Excluir este agendamento?')){ var removido = State.agendamentos.find(a=>a.id===id); State.agendamentos = State.agendamentos.filter(a=>a.id!==id); Storage.saveAgendamentos(); this.atualizarLista(); showToast('Excluído'); if(removido) GoogleSheetsSync.syncSingleAgendamento({...removido, _deleted: true}); } },
   obterAgendamentosDoDia: function(tecnicoLogin) { var hoje = new Date().toISOString().split('T')[0]; return State.agendamentos.filter(a => a.tecnico === tecnicoLogin && a.data === hoje && a.status !== 'concluido'); }
 };
 
@@ -258,7 +258,7 @@ var Jornada = {
   removerFoto: function(etapa) { if(State.jornada.dados[etapa]) delete State.jornada.dados[etapa].foto; Storage.saveJornada(Auth.currentUser.login, State.jornada); this.renderizar(); showToast('Foto removida'); }
 };
 
-// ==================== FOTOS (CORRIGIDO) ====================
+// ==================== FOTOS ====================
 var Fotos = {
   compressFile: function(file) { 
     return new Promise((resolve, reject) => { 
@@ -284,7 +284,6 @@ var Fotos = {
   compress: function(b64){ return Promise.resolve(b64); },
   
   init: function() { 
-    // Configura listeners dos inputs de arquivo
     var fotoHorimetroInput = document.getElementById('fotoHorimetroInput');
     if(fotoHorimetroInput) {
       fotoHorimetroInput.addEventListener('change', async function(e) {
@@ -399,35 +398,66 @@ var Fotos = {
   }
 };
 
-// ==================== GOOGLE SHEETS SYNC (corrigido) ====================
+// ==================== GOOGLE SHEETS SYNC (completo) ====================
 const GoogleSheetsSync = {
   webAppUrl: 'https://script.google.com/macros/s/AKfycbxbDRx57y4CnRW4e-3hW1eG3n3vX6HxJGV-oG3a59wul2Jx6ATr5g1XZaAiDRpUQI7U/exec',
   setStatus: function(msg, success) { var st=document.getElementById('syncStatusText'); if(st) st.textContent=msg; },
-  fetchFromSheet: async function() { 
+  
+  // Envio de dados para a planilha (post)
+  async postData(action, data) {
+    try {
+      await fetch(this.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, data: data })
+      });
+      return true;
+    } catch(e) { console.error(e); return false; }
+  },
+  
+  // Sincronização de agendamento individual
+  async syncSingleAgendamento(agendamento) {
+    await this.postData('syncAgendamento', agendamento);
+  },
+  
+  // Sincronização de todas as permissões
+  async syncPermissoes(permissoes) {
+    await this.postData('syncPermissoes', permissoes);
+  },
+  
+  // Sincronização de todos os usuários
+  async syncUsuarios(usuarios) {
+    await this.postData('syncUsuarios', usuarios);
+  },
+  
+  // Sincronização completa (buscar todos os dados)
+  async fetchFromSheet() {
     try { 
-      this.setStatus('Baixando...'); 
+      this.setStatus('Baixando dados...'); 
       var resp = await fetch(this.webAppUrl); 
       var data = await resp.json(); 
       if(data.success){ 
-        if(data.clientes) State.clients=data.clientes; 
-        if(data.os) State.osHistory=data.os; 
-        Storage.saveClients(); Storage.saveOSHistory(); 
-        if(Clientes.renderTable) Clientes.renderTable(); 
-        if(Historico.render) Historico.render(); 
+        if(data.clientes) { State.clients = data.clientes; Storage.saveClients(); if(Clientes.renderTable) Clientes.renderTable(); Clientes.updateStats(); }
+        if(data.os) { State.osHistory = data.os; Storage.saveOSHistory(); if(Historico.render) Historico.render(); Historico.updateStats(); }
+        if(data.agendamentos) { State.agendamentos = data.agendamentos; Storage.saveAgendamentos(); if(Agendamentos.atualizarLista) Agendamentos.atualizarLista(); }
+        if(data.permissoes) { localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(data.permissoes)); if(Permissoes.carregarNaInterface) Permissoes.carregarNaInterface(); }
+        if(data.usuarios) { Auth.saveUsers(data.usuarios); if(UserManager.render) UserManager.render(); }
         this.setStatus('Sincronizado',true); 
-        showToast('Dados sincronizados'); 
+        showToast('Dados sincronizados da planilha'); 
       } 
-    } catch(e){ console.error(e); } 
+    } catch(e){ console.error(e); this.setStatus('Erro',false); } 
   },
-  fullSync: async function() { await this.fetchFromSheet(); },
+  
+  fullSync: async function() { 
+    await this.fetchFromSheet(); 
+  },
+  
   syncSingleOS: async function(os) { 
-    // Placeholder para não quebrar o código – implementar se necessário
-    console.log('syncSingleOS chamado', os); 
-    return true; 
+    await this.postData('syncOS', os);
   },
   syncSingleCliente: async function(cliente) { 
-    console.log('syncSingleCliente chamado', cliente); 
-    return true; 
+    await this.postData('syncCliente', cliente);
   }
 };
 
@@ -496,7 +526,7 @@ var Clientes = {
   updateStats: function() { var totalClientes = State.clients.length; var totalMarcas = 0; State.clients.forEach(function(c) { totalMarcas += (c.equipamentos || []).length; }); var clientesComOS = new Set(); var totalOS = 0; var osAbertas = 0; var osAprovadas = 0; State.osHistory.forEach(function(os) { if (os.cliente) { clientesComOS.add(os.cliente); totalOS++; } if (os.status === 'abertura' || os.status === 'execucao' || os.status === 'finalizacao') osAbertas++; if (os.status === 'aprovada') osAprovadas++; }); $('statTotalClientes').innerText = totalClientes; $('statTotalMarcas').innerText = totalMarcas; $('statClientesComOS').innerText = clientesComOS.size; $('statTotalOSClientes').innerText = totalOS; $('statOSAbertasCliente').innerText = osAbertas; $('statOSAprovadasCliente').innerText = osAprovadas; },
   renderTable: function() { var tbody = $('cad_tableBody'); if(!tbody) return; tbody.innerHTML = ''; if (!State.clients || State.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-[var(--muted)]">Nenhum cliente cadastrado</td></tr>'; return; } State.clients.forEach(function(c) { var row = tbody.insertRow(); var marcasLista = (c.equipamentos || []).map(function(eq) { return eq.marca; }).join(', '); row.innerHTML = '<td class="p-2 font-medium">' + (c.nome || '-') + '</td><td class="p-2">' + (c.cidade || '-') + '</td><td class="p-2">' + (marcasLista || '-') + '</td><td class="p-2"><button onclick="Clientes.select(' + c.id + ')" class="btn btn-primary text-xs py-1 px-2">Selecionar</button> <i class="fas fa-edit text-blue-400 cursor-pointer ml-2" onclick="Clientes.edit(' + c.id + ')"></i> <i class="fas fa-trash text-red-400 cursor-pointer ml-2" onclick="Clientes.delete(' + c.id + ')"></i></td>'; }); },
   addEquipField: function(marca, modelo, serie, qtd, combustivel) { adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel); },
-  save: async function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marcaSelect = item.querySelector('.equip-marca').value; var outraInput = item.querySelector('.outra-marca'); var marca = marcaSelect === 'OUTRA' ? (outraInput ? outraInput.value.toUpperCase() : '') : marcaSelect; if (marca) { equipamentos.push({ marca: marca, modelo: item.querySelector('.equip-modelo').value || '', serie: item.querySelector('.equip-serie').value || '', qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value || '' }); } }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); if (GoogleSheetsSync && GoogleSheetsSync.syncSingleCliente) await GoogleSheetsSync.syncSingleCliente(cliente); },
+  save: async function() { var nome = Utils.getVal('cad_nome').trim(); if (!nome) { showToast('Nome do cliente obrigatório', true); return; } var equipamentos = []; var container = $('equipamentosList'); if (container) { container.querySelectorAll('.equip-item').forEach(function(item) { var marcaSelect = item.querySelector('.equip-marca').value; var outraInput = item.querySelector('.outra-marca'); var marca = marcaSelect === 'OUTRA' ? (outraInput ? outraInput.value.toUpperCase() : '') : marcaSelect; if (marca) { equipamentos.push({ marca: marca, modelo: item.querySelector('.equip-modelo').value || '', serie: item.querySelector('.equip-serie').value || '', qtd: parseInt(item.querySelector('.equip-qtd').value) || 1, combustivel: item.querySelector('.equip-combustivel').value || '' }); } }); } var cliente = { id: State.editingClientId || Date.now(), nome: nome, cnpj: Utils.getVal('cad_cnpj'), endereco: Utils.getVal('cad_endereco'), cidade: Utils.getVal('cad_cidade'), telefone: Utils.getVal('cad_telefone'), whatsapp: Utils.getVal('cad_whatsapp'), email: Utils.getVal('cad_email'), responsavel_nome: Utils.getVal('cad_responsavel_nome'), responsavel_telefone: Utils.getVal('cad_responsavel_telefone'), equipamentos: equipamentos }; if (State.editingClientId) { var idx = State.clients.findIndex(function(c) { return c.id === State.editingClientId; }); if (idx >= 0) State.clients[idx] = cliente; State.editingClientId = null; var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'none'; } else { State.clients.push(cliente); } Storage.saveClients(); this.renderTable(); this.clearForm(); this.updateStats(); showToast('Cliente salvo'); await GoogleSheetsSync.syncSingleCliente(cliente); },
   select: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; if (c.equipamentos && c.equipamentos.length > 0) { App.mostrarModalEquipamentos(c); } else { Utils.setVal('cliente', c.nome); Utils.setVal('cnpj', c.cnpj); Utils.setVal('cidadeCliente', c.cidade); Utils.setVal('endereco', c.endereco); Utils.setVal('whatsappCliente', c.whatsapp); showToast('Cliente carregado'); var tabOsBtn = document.querySelector('.tab-button[data-tab="tab-os"]'); if (tabOsBtn) tabOsBtn.click(); } },
   edit: function(id) { var c = State.clients.find(function(c) { return c.id === id; }); if (!c) return; State.editingClientId = id; Utils.setVal('cad_nome', c.nome); Utils.setVal('cad_cnpj', c.cnpj); Utils.setVal('cad_endereco', c.endereco); Utils.setVal('cad_cidade', c.cidade); Utils.setVal('cad_telefone', c.telefone); Utils.setVal('cad_whatsapp', c.whatsapp); Utils.setVal('cad_email', c.email || ''); Utils.setVal('cad_responsavel_nome', c.responsavel_nome || ''); Utils.setVal('cad_responsavel_telefone', c.responsavel_telefone || ''); var container = $('equipamentosList'); if (container) container.innerHTML = ''; if (c.equipamentos && c.equipamentos.length) { c.equipamentos.forEach(function(eq) { adicionarCampoEquipamento(eq.marca, eq.modelo, eq.serie, eq.qtd, eq.combustivel); }); } var cancelBtn = $('cad_btnCancelar'); if (cancelBtn) cancelBtn.style.display = 'inline-flex'; showToast('Editando cliente'); },
   delete: function(id) { if (!confirm('Excluir este cliente?')) return; State.clients = State.clients.filter(function(c) { return c.id !== id; }); Storage.saveClients(); this.renderTable(); this.updateStats(); showToast('Cliente excluido'); },
@@ -531,8 +561,8 @@ var Permissoes = {
     sincronizar: false, exportar_csv: false, clientes_cadastrar: true, historico_visualizar: true
   },
   carregar: function() { var salvas = localStorage.getItem('marlift_permissoes_tecnico'); if (salvas) return JSON.parse(salvas); return JSON.parse(JSON.stringify(this.permissoesPadrao)); },
-  salvar: function() { var permissoes = {}; for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) permissoes[key] = chk.checked; } localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(permissoes)); showToast('Permissões salvas'); },
-  resetarPadrao: function() { for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) chk.checked = this.permissoesPadrao[key]; } showToast('Permissões restauradas'); },
+  salvar: function() { var permissoes = {}; for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) permissoes[key] = chk.checked; } localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(permissoes)); showToast('Permissões salvas'); GoogleSheetsSync.syncPermissoes(permissoes); },
+  resetarPadrao: function() { for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) chk.checked = this.permissoesPadrao[key]; } showToast('Permissões restauradas'); this.salvar(); },
   carregarNaInterface: function() { var p = this.carregar(); for (var k in p) { var chk = document.getElementById('perm_' + k); if (chk) chk.checked = p[k]; } }
 };
 
@@ -540,9 +570,10 @@ var Permissoes = {
 var UserManager = {
   editingId: null,
   render: function() { var users = Auth.getUsers(); var tbody = $('userTableBody'); if(!tbody) return; tbody.innerHTML = ''; users.forEach(u => { var row = tbody.insertRow(); var nivelText = u.nivel==='admin'?'👑 Admin':(u.nivel==='tecnico'?'🔧 Técnico':'👁️ Visualizador'); row.innerHTML = `<td class="p-2">${u.nome}</td><td class="p-2">${u.login}</td><td class="p-2">${nivelText}</td><td class="p-2"><i class="fas fa-edit text-blue-400 cursor-pointer mr-2" onclick="UserManager.edit(${u.id})"></i><i class="fas fa-trash text-red-400 cursor-pointer" onclick="UserManager.delete(${u.id})"></i></td>`; }); },
-  addUser: function() { var nome = document.getElementById('userNome').value.trim(); var login = document.getElementById('userLogin').value.trim(); var senha = document.getElementById('userSenha').value; var nivel = document.getElementById('userNivel').value; if(!nome||!login||!senha){ showToast('Preencha todos os campos',true); return; } var users = Auth.getUsers(); if(users.find(u=>u.login===login)){ showToast('Login já existe',true); return; } users.push({id:Date.now(),nome,login,senha,nivel}); Auth.saveUsers(users); this.render(); this.clearForm(); showToast('Usuário adicionado'); },
+  addUser: function() { var nome = document.getElementById('userNome').value.trim(); var login = document.getElementById('userLogin').value.trim(); var senha = document.getElementById('userSenha').value; var nivel = document.getElementById('userNivel').value; if(!nome||!login||!senha){ showToast('Preencha todos os campos',true); return; } var users = Auth.getUsers(); if(users.find(u=>u.login===login)){ showToast('Login já existe',true); return; } users.push({id:Date.now(),nome,login,senha,nivel}); Auth.saveUsers(users); this.render(); this.clearForm(); showToast('Usuário adicionado'); GoogleSheetsSync.syncUsuarios(users); },
   edit: function(id) { var users = Auth.getUsers(); var user = users.find(u=>u.id===id); if(!user) return; this.editingId=id; document.getElementById('userNome').value=user.nome; document.getElementById('userLogin').value=user.login; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value=user.nivel; document.getElementById('userCancelBtn').style.display='inline-flex'; showToast('Editando'); },
-  delete: function(id) { if(Auth.currentUser && Auth.currentUser.id===id){ showToast('Não pode excluir próprio usuário',true); return; } if(!confirm('Excluir?')) return; var users = Auth.getUsers().filter(u=>u.id!==id); Auth.saveUsers(users); this.render(); showToast('Excluído'); },
+  saveEdit: function() { if(!this.editingId) return; var nome = document.getElementById('userNome').value.trim(); var login = document.getElementById('userLogin').value.trim(); var senha = document.getElementById('userSenha').value; var nivel = document.getElementById('userNivel').value; if(!nome||!login){ showToast('Preencha nome e login',true); return; } var users = Auth.getUsers(); var idx = users.findIndex(u=>u.id===this.editingId); if(idx===-1) return; users[idx].nome = nome; users[idx].login = login; users[idx].nivel = nivel; if(senha) users[idx].senha = senha; Auth.saveUsers(users); this.render(); this.cancelEdit(); showToast('Usuário atualizado'); GoogleSheetsSync.syncUsuarios(users); },
+  delete: function(id) { if(Auth.currentUser && Auth.currentUser.id===id){ showToast('Não pode excluir próprio usuário',true); return; } if(!confirm('Excluir?')) return; var users = Auth.getUsers().filter(u=>u.id!==id); Auth.saveUsers(users); this.render(); showToast('Excluído'); GoogleSheetsSync.syncUsuarios(users); },
   cancelEdit: function() { this.editingId=null; this.clearForm(); document.getElementById('userCancelBtn').style.display='none'; },
   clearForm: function() { document.getElementById('userNome').value=''; document.getElementById('userLogin').value=''; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value='tecnico'; }
 };
