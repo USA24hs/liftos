@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <title>Marlift Empilhadeiras - OS Profissional v9.1</title>
+  <title>Marlift Empilhadeiras - OS Profissional v9.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* (estilos iguais aos anteriores - mantidos) */
+    /* ===== ESTILOS (compactados mas completos) ===== */
     * { -webkit-tap-highlight-color: transparent; }
     :root {
       --bg: #0c0f12;
@@ -137,14 +137,13 @@
 <div id="appContainer" style="display:none;">
   <header class="no-print border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3">
-      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v9.1</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
+      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v9.2</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
       <div class="toolbar"><button onclick="App.gerarPreviaPDF()" id="btnPreviaPDF" class="btn btn-primary text-sm" disabled><i class="fas fa-file-pdf"></i> PDF</button><button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> E-mail</button><button onclick="App.sendWhatsAppMessage()" id="btnWhatsApp" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button><button onclick="App.novaOS()" id="btnNovaOS" class="btn btn-yellow text-sm"><i class="fas fa-plus"></i> Nova O.S</button><button onclick="GoogleSheetsSync.fullSync()" id="btnSync" class="btn btn-sync text-sm"><i class="fas fa-cloud-upload-alt"></i> Sincronizar</button><button onclick="GoogleSheetsSync.fetchFromSheet()" id="btnDownload" class="btn btn-secondary text-sm"><i class="fas fa-cloud-download-alt"></i> Baixar</button></div>
     </div>
   </header>
   <main class="max-w-7xl mx-auto px-4 py-6">
     <div class="step-indicator no-print mb-6"><div class="step" data-step="abertura">Abertura</div><div class="step" data-step="execucao">Execução</div><div class="step" data-step="finalizacao">Finalizando</div><div class="step" data-step="fechada">Fechada</div><div class="step" data-step="aprovada">Aprovada</div></div>
     
-    <!-- Container das abas com ID fixo -->
     <div id="tabsContainer" class="flex border-b border-[var(--border)] mb-6 no-print overflow-x-auto">
       <button class="tab-button active" data-tab="tab-os">O.S</button>
       <button class="tab-button" data-tab="tab-checklist">Checklist</button>
@@ -193,7 +192,7 @@
     <div id="tab-permissoes" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-lock"></i> Configuração de Permissões - Técnico</h2><div id="permissoesContainer"></div><div class="flex gap-3 mt-6 flex-wrap"><button onclick="Permissoes.salvar()" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Permissões</button><button onclick="Permissoes.resetarPadrao()" class="btn btn-secondary"><i class="fas fa-undo"></i> Restaurar Padrão</button></div></div></div>
 
     <!-- TAB USUÁRIOS (Admin) -->
-    <div id="tab-usuarios" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-users"></i> Gerenciar Usuários</h2><div class="grid md:grid-cols-2 gap-4 mb-5"><div><input type="text" id="userNome" placeholder="Nome" class="form-input"></div><div><input type="text" id="userLogin" placeholder="Login" class="form-input"></div><div><input type="password" id="userSenha" placeholder="Senha" class="form-input"></div><div><select id="userNivel" class="form-input"><option value="admin">Admin</option><option value="tecnico">Técnico</option><option value="visualizador">Visualizador</option></select></div></div><div class="flex gap-3 mb-5 flex-wrap"><button onclick="UserManager.addUser()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Adicionar</button><button onclick="UserManager.cancelEdit()" id="userCancelBtn" class="btn btn-secondary" style="display:none;">Cancelar</button></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-2">Nome</th><th>Login</th><th>Nível</th><th>Ações</th><tr></thead><tbody id="userTableBody"></tbody></table></div></div></div>
+    <div id="tab-usuarios" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-users"></i> Gerenciar Usuários</h2><div class="grid md:grid-cols-2 gap-4 mb-5"><div><input type="text" id="userNome" placeholder="Nome" class="form-input"></div><div><input type="text" id="userLogin" placeholder="Login" class="form-input"></div><div><input type="password" id="userSenha" placeholder="Senha" class="form-input"></div><div><select id="userNivel" class="form-input"><option value="admin">Admin</option><option value="tecnico">Técnico</option><option value="visualizador">Visualizador</option></select></div></div><div class="flex gap-3 mb-5 flex-wrap"><button onclick="UserManager.addUser()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Adicionar</button><button onclick="UserManager.cancelEdit()" id="userCancelBtn" class="btn btn-secondary" style="display:none;">Cancelar</button></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-2">Nome</th><th>Login</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div></div>
 
   </main>
   <div id="toastCenter" class="toast-center"><i class="fas fa-check-circle text-green-500 text-xl"></i><span id="toastMessage">Operação realizada</span></div>
@@ -201,7 +200,7 @@
 </div>
 
 <script>
-// ==================== CONFIGURAÇÕES INICIAIS ====================
+// ==================== CONFIGURAÇÕES ====================
 var Config = {
   marcas: ["TOYOTA","CLARK","BYD","PALETRANS","LINDE","HYSTER","YALE","CATERPILLAR","KOMATSU","MITSUBISHI","NISSAN","STILL","CROWN","JUNGHEINRICH","TCM","HYUNDAI","DOOSAN","HELI","HANGCHA","LONKING","OUTRA"],
   checklist: [ { id:'motor', title:'Motor e Componentes', items:[{id:'motor_oleo',label:'Nivel de oleo do motor'},{id:'motor_filtro_oleo',label:'Filtro de oleo'},{id:'motor_filtro_ar',label:'Filtro de ar'},{id:'motor_filtro_comb',label:'Filtro de combustivel'},{id:'motor_correias',label:'Correias'},{id:'motor_radiador',label:'Radiador'}] }, { id:'eletrico', title:'Sistema Eletrico', items:[{id:'eletr_bateria',label:'Bateria'},{id:'eletr_terminais',label:'Terminais'},{id:'eletr_alternador',label:'Alternador'},{id:'eletr_partida',label:'Motor de partida'},{id:'eletr_farois',label:'Farois'},{id:'eletr_buzina',label:'Buzina'}] }, { id:'hidraulico', title:'Sistema Hidraulico', items:[{id:'hidr_oleo',label:'Nivel oleo hidraulico'},{id:'hidr_bomba',label:'Bomba hidraulica'},{id:'hidr_cilindros',label:'Cilindros'},{id:'hidr_vazamentos',label:'Vazamentos'},{id:'hidr_mangueiras',label:'Mangueiras'}] }, { id:'transmissao', title:'Transmissao e Freios', items:[{id:'trans_oleo',label:'Oleo transmissao'},{id:'freio_servico',label:'Freio de servico'},{id:'freio_estac',label:'Freio de estacionamento'},{id:'freio_pastilhas',label:'Pastilhas/Lonas'}] }, { id:'direcao', title:'Direcao', items:[{id:'dir_volante',label:'Volante'},{id:'dir_caixa',label:'Caixa de direcao'},{id:'dir_hidraulica',label:'Direcao hidraulica'}] }, { id:'estrutura', title:'Estrutura e Garfos', items:[{id:'est_mastros',label:'Mastros'},{id:'est_correntes',label:'Correntes'},{id:'est_garfos',label:'Garfos'},{id:'est_roletes',label:'Roletes'}] }, { id:'seguranca', title:'Seguranca', items:[{id:'seg_cinto',label:'Cinto de seguranca'},{id:'seg_extintor',label:'Extintor'},{id:'seg_espelhos',label:'Espelhos'},{id:'seg_alarme',label:'Alarme de re'}] } ],
@@ -432,39 +431,37 @@ const GoogleSheetsSync = {
       this.setStatus('Baixando dados...');
       const response = await fetch(this.webAppUrl);
       const data = await response.json();
+      console.log('Dados recebidos da planilha:', data); // debug
       if (data.success) {
-        // Clientes
         if (data.clientes) {
           State.clients = data.clientes;
           Storage.saveClients();
           if (Clientes.renderTable) Clientes.renderTable();
           if (Clientes.updateStats) Clientes.updateStats();
+          console.log('Clientes carregados:', State.clients.length);
         }
-        // OS
         if (data.os) {
           State.osHistory = data.os;
           Storage.saveOSHistory();
           if (Historico.render) Historico.render();
           if (Historico.updateStats) Historico.updateStats();
-          if (Clientes.updateStats) Clientes.updateStats(); // atualiza estatísticas dos clientes
+          if (Clientes.updateStats) Clientes.updateStats();
+          console.log('OS carregadas:', State.osHistory.length);
         }
-        // Agendamentos
         if (data.agendamentos) {
           State.agendamentos = data.agendamentos;
           Storage.saveAgendamentos();
           if (Agendamentos.atualizarLista) Agendamentos.atualizarLista();
         }
-        // Permissões (só carrega se houver dados na planilha)
         if (data.permissoes && Object.keys(data.permissoes).length > 0) {
           localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(data.permissoes));
           if (Permissoes.carregarNaInterface) Permissoes.carregarNaInterface();
         }
-        // Usuários
         if (data.usuarios && data.usuarios.length > 0) {
           Auth.saveUsers(data.usuarios);
           if (UserManager.render) UserManager.render();
-          // Atualiza a lista de técnicos no select de agendamentos
           if (Agendamentos.atualizarSelectTecnicos) Agendamentos.atualizarSelectTecnicos();
+          console.log('Usuários carregados:', data.usuarios.length);
         }
         this.setStatus('Sincronizado', true);
         showToast('✅ Dados sincronizados da planilha');
@@ -498,19 +495,16 @@ var Auth = { currentUser: null,
     var login = document.getElementById('loginUsername').value.trim();
     var senha = document.getElementById('loginPassword').value;
     var errorDiv = document.getElementById('loginErrorMessage');
-    if (errorDiv) {
-      errorDiv.style.display = 'none';
-      errorDiv.innerHTML = '';
-    }
+    if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.innerHTML = ''; }
     if (!login || !senha) {
       if (errorDiv) { errorDiv.innerHTML = '❌ Preencha usuário e senha'; errorDiv.style.display = 'block'; }
       showToast('Preencha usuário e senha', true);
       return;
     }
     
-    // Se não houver usuários no localStorage (apenas os padrões), tenta buscar da planilha
+    // Se não houver usuários no localStorage, tenta buscar da planilha
     var users = this.getUsers();
-    if (!users || users.length <= 2) { // só os padrões
+    if (!users || users.length <= 2) {
       showToast('Sincronizando usuários da planilha...');
       await GoogleSheetsSync.fetchFromSheet();
       users = this.getUsers();
@@ -705,7 +699,6 @@ var App = {
   carregarEquipamento: function(equip,cliente) { Utils.setVal('cliente',cliente.nome); Utils.setVal('cnpj',cliente.cnpj); Utils.setVal('cidadeCliente',cliente.cidade); Utils.setVal('endereco',cliente.endereco); Utils.setVal('whatsappCliente',cliente.whatsapp); var selectMarca=$('marcaSelect'); if(selectMarca){ var marcaEquip=equip.marca||''; if(Config.marcas.indexOf(marcaEquip)!==-1){ selectMarca.value=marcaEquip; $('marcaOutraDiv').style.display='none'; } else if(marcaEquip){ selectMarca.value='OUTRA'; Utils.setVal('marcaOutra',marcaEquip); $('marcaOutraDiv').style.display='block'; } } Utils.setVal('modelo',equip.modelo||''); Utils.setVal('numSerie',equip.serie||''); if(equip.combustivel) Utils.setVal('combustivel',equip.combustivel); showToast('Equipamento carregado'); document.querySelector('.tab-button[data-tab="tab-os"]').click(); }
 };
 
-// Função auxiliar para adicionar campo de equipamento
 function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
   marca=marca||''; modelo=modelo||''; serie=serie||''; qtd=qtd||1; combustivel=combustivel||'';
   var container=$('equipamentosList'); if(!container) return;
@@ -719,7 +712,6 @@ function adicionarCampoEquipamento(marca, modelo, serie, qtd, combustivel) {
   select.addEventListener('change',()=>{ outraDiv.style.display=select.value==='OUTRA'?'block':'none'; if(select.value!=='OUTRA'){ var outraInput=div.querySelector('.outra-marca'); if(outraInput) outraInput.value=''; } });
 }
 
-// Inicialização
 document.addEventListener('DOMContentLoaded', function() { 
   if (!Auth.checkSession()) {
     document.getElementById('loginScreen').style.display = 'flex';
