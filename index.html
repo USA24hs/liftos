@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <title>Marlift Empilhadeiras - OS Profissional v9.0</title>
+  <title>Marlift Empilhadeiras - OS Profissional v9.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -137,7 +137,7 @@
 <div id="appContainer" style="display:none;">
   <header class="no-print border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3">
-      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v9.0</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
+      <div class="top-bar"><div class="flex items-center gap-3"><div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] rounded-xl flex items-center justify-center shadow-lg"><svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div><h1 class="font-display text-xl md:text-2xl tracking-wide text-[var(--accent)]">MARLIFT EMPILHADEIRAS</h1><p class="text-xs text-[var(--muted)]">Sistema de O.S - v9.1</p></div></div><div class="user-area"><i class="fas fa-user-circle text-[var(--accent)] text-lg"></i><span class="font-medium text-sm" id="currentUserName">Carregando...</span><div class="w-px h-5 bg-[var(--border])"></div><button onclick="Auth.logout()" class="text-xs text-[var(--muted)] hover:text-[var(--danger)] transition-colors"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div>
       <div class="toolbar"><button onclick="App.gerarPreviaPDF()" id="btnPreviaPDF" class="btn btn-primary text-sm" disabled><i class="fas fa-file-pdf"></i> PDF</button><button onclick="App.enviarEmailComResumo()" id="btnEnviarEmail" class="btn btn-secondary text-sm" disabled><i class="fas fa-envelope"></i> E-mail</button><button onclick="App.sendWhatsAppMessage()" id="btnWhatsApp" class="btn btn-secondary text-sm"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</button><button onclick="App.novaOS()" id="btnNovaOS" class="btn btn-yellow text-sm"><i class="fas fa-plus"></i> Nova O.S</button><button onclick="GoogleSheetsSync.fullSync()" id="btnSync" class="btn btn-sync text-sm"><i class="fas fa-cloud-upload-alt"></i> Sincronizar</button><button onclick="GoogleSheetsSync.fetchFromSheet()" id="btnDownload" class="btn btn-secondary text-sm"><i class="fas fa-cloud-download-alt"></i> Baixar</button></div>
     </div>
   </header>
@@ -193,7 +193,7 @@
     <div id="tab-permissoes" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-lock"></i> Configuração de Permissões - Técnico</h2><div id="permissoesContainer"></div><div class="flex gap-3 mt-6 flex-wrap"><button onclick="Permissoes.salvar()" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Permissões</button><button onclick="Permissoes.resetarPadrao()" class="btn btn-secondary"><i class="fas fa-undo"></i> Restaurar Padrão</button></div></div></div>
 
     <!-- TAB USUÁRIOS (Admin) -->
-    <div id="tab-usuarios" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-users"></i> Gerenciar Usuários</h2><div class="grid md:grid-cols-2 gap-4 mb-5"><div><input type="text" id="userNome" placeholder="Nome" class="form-input"></div><div><input type="text" id="userLogin" placeholder="Login" class="form-input"></div><div><input type="password" id="userSenha" placeholder="Senha" class="form-input"></div><div><select id="userNivel" class="form-input"><option value="admin">Admin</option><option value="tecnico">Técnico</option><option value="visualizador">Visualizador</option></select></div></div><div class="flex gap-3 mb-5 flex-wrap"><button onclick="UserManager.addUser()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Adicionar</button><button onclick="UserManager.cancelEdit()" id="userCancelBtn" class="btn btn-secondary" style="display:none;">Cancelar</button></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-2">Nome</th><th>Login</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div></div>
+    <div id="tab-usuarios" class="tab-content"><div class="checklist-card p-4 md:p-5"><h2 class="font-display text-xl mb-3"><i class="fas fa-users"></i> Gerenciar Usuários</h2><div class="grid md:grid-cols-2 gap-4 mb-5"><div><input type="text" id="userNome" placeholder="Nome" class="form-input"></div><div><input type="text" id="userLogin" placeholder="Login" class="form-input"></div><div><input type="password" id="userSenha" placeholder="Senha" class="form-input"></div><div><select id="userNivel" class="form-input"><option value="admin">Admin</option><option value="tecnico">Técnico</option><option value="visualizador">Visualizador</option></select></div></div><div class="flex gap-3 mb-5 flex-wrap"><button onclick="UserManager.addUser()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Adicionar</button><button onclick="UserManager.cancelEdit()" id="userCancelBtn" class="btn btn-secondary" style="display:none;">Cancelar</button></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-2">Nome</th><th>Login</th><th>Nível</th><th>Ações</th><tr></thead><tbody id="userTableBody"></tbody></table></div></div></div>
 
   </main>
   <div id="toastCenter" class="toast-center"><i class="fas fa-check-circle text-green-500 text-xl"></i><span id="toastMessage">Operação realizada</span></div>
@@ -398,12 +398,11 @@ var Fotos = {
   }
 };
 
-// ==================== GOOGLE SHEETS SYNC (completo) ====================
+// ==================== GOOGLE SHEETS SYNC ====================
 const GoogleSheetsSync = {
   webAppUrl: 'https://script.google.com/macros/s/AKfycbxbDRx57y4CnRW4e-3hW1eG3n3vX6HxJGV-oG3a59wul2Jx6ATr5g1XZaAiDRpUQI7U/exec',
   setStatus: function(msg, success) { var st=document.getElementById('syncStatusText'); if(st) st.textContent=msg; },
   
-  // Envio de dados para a planilha (post)
   async postData(action, data) {
     try {
       await fetch(this.webAppUrl, {
@@ -416,47 +415,77 @@ const GoogleSheetsSync = {
     } catch(e) { console.error(e); return false; }
   },
   
-  // Sincronização de agendamento individual
   async syncSingleAgendamento(agendamento) {
     await this.postData('syncAgendamento', agendamento);
   },
   
-  // Sincronização de todas as permissões
   async syncPermissoes(permissoes) {
     await this.postData('syncPermissoes', permissoes);
   },
   
-  // Sincronização de todos os usuários
   async syncUsuarios(usuarios) {
     await this.postData('syncUsuarios', usuarios);
   },
   
-  // Sincronização completa (buscar todos os dados)
   async fetchFromSheet() {
-    try { 
-      this.setStatus('Baixando dados...'); 
-      var resp = await fetch(this.webAppUrl); 
-      var data = await resp.json(); 
-      if(data.success){ 
-        if(data.clientes) { State.clients = data.clientes; Storage.saveClients(); if(Clientes.renderTable) Clientes.renderTable(); Clientes.updateStats(); }
-        if(data.os) { State.osHistory = data.os; Storage.saveOSHistory(); if(Historico.render) Historico.render(); Historico.updateStats(); }
-        if(data.agendamentos) { State.agendamentos = data.agendamentos; Storage.saveAgendamentos(); if(Agendamentos.atualizarLista) Agendamentos.atualizarLista(); }
-        if(data.permissoes) { localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(data.permissoes)); if(Permissoes.carregarNaInterface) Permissoes.carregarNaInterface(); }
-        if(data.usuarios) { Auth.saveUsers(data.usuarios); if(UserManager.render) UserManager.render(); }
-        this.setStatus('Sincronizado',true); 
-        showToast('Dados sincronizados da planilha'); 
-      } 
-    } catch(e){ console.error(e); this.setStatus('Erro',false); } 
+    try {
+      this.setStatus('Baixando dados...');
+      const response = await fetch(this.webAppUrl);
+      const data = await response.json();
+      if (data.success) {
+        // Clientes
+        if (data.clientes) {
+          State.clients = data.clientes;
+          Storage.saveClients();
+          if (Clientes.renderTable) Clientes.renderTable();
+          if (Clientes.updateStats) Clientes.updateStats();
+        }
+        // OS
+        if (data.os) {
+          State.osHistory = data.os;
+          Storage.saveOSHistory();
+          if (Historico.render) Historico.render();
+          if (Historico.updateStats) Historico.updateStats();
+          if (Clientes.updateStats) Clientes.updateStats(); // atualiza estatísticas dos clientes
+        }
+        // Agendamentos
+        if (data.agendamentos) {
+          State.agendamentos = data.agendamentos;
+          Storage.saveAgendamentos();
+          if (Agendamentos.atualizarLista) Agendamentos.atualizarLista();
+        }
+        // Permissões (só carrega se houver dados na planilha)
+        if (data.permissoes && Object.keys(data.permissoes).length > 0) {
+          localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(data.permissoes));
+          if (Permissoes.carregarNaInterface) Permissoes.carregarNaInterface();
+        }
+        // Usuários
+        if (data.usuarios && data.usuarios.length > 0) {
+          Auth.saveUsers(data.usuarios);
+          if (UserManager.render) UserManager.render();
+          // Atualiza a lista de técnicos no select de agendamentos
+          if (Agendamentos.atualizarSelectTecnicos) Agendamentos.atualizarSelectTecnicos();
+        }
+        this.setStatus('Sincronizado', true);
+        showToast('✅ Dados sincronizados da planilha');
+      } else {
+        throw new Error(data.error || 'Erro na resposta');
+      }
+    } catch (error) {
+      console.error('Erro no fetchFromSheet:', error);
+      this.setStatus('Erro ao baixar', false);
+      showToast('❌ Erro ao sincronizar com a planilha', true);
+    }
   },
   
-  fullSync: async function() { 
-    await this.fetchFromSheet(); 
+  async fullSync() {
+    await this.fetchFromSheet();
   },
   
-  syncSingleOS: async function(os) { 
+  async syncSingleOS(os) {
     await this.postData('syncOS', os);
   },
-  syncSingleCliente: async function(cliente) { 
+  async syncSingleCliente(cliente) {
     await this.postData('syncCliente', cliente);
   }
 };
@@ -465,7 +494,47 @@ const GoogleSheetsSync = {
 var Auth = { currentUser: null,
   getUsers() { var users = localStorage.getItem('marlift_users'); if(users) return JSON.parse(users); var defaultUsers = [ { id:1, nome:'Administrador', login:'admin', senha:'admin123', nivel:'admin' }, { id:2, nome:'Técnico Principal', login:'tecnico', senha:'123456', nivel:'tecnico' } ]; localStorage.setItem('marlift_users', JSON.stringify(defaultUsers)); return defaultUsers; },
   saveUsers(users) { localStorage.setItem('marlift_users', JSON.stringify(users)); },
-  login() { var login = document.getElementById('loginUsername').value.trim(); var senha = document.getElementById('loginPassword').value; if(!login||!senha){ showToast('Preencha usuário e senha',true); return; } var users = this.getUsers(); var user = users.find(u=>u.login===login && u.senha===senha); if(!user){ showToast('Usuário ou senha inválidos!',true); document.getElementById('loginPassword').value=''; return; } this.currentUser = user; localStorage.setItem('marlift_current_user', JSON.stringify(user)); document.getElementById('loginScreen').style.display='none'; document.getElementById('appContainer').style.display='block'; document.getElementById('currentUserName').innerHTML = user.nome; this.updatePermissions(); showToast(`Bem-vindo, ${user.nome}!`); App.init(); if(user.nivel === 'tecnico'){ setTimeout(()=>{ Jornada.carregar(); }, 500); } },
+  async login() {
+    var login = document.getElementById('loginUsername').value.trim();
+    var senha = document.getElementById('loginPassword').value;
+    var errorDiv = document.getElementById('loginErrorMessage');
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.innerHTML = '';
+    }
+    if (!login || !senha) {
+      if (errorDiv) { errorDiv.innerHTML = '❌ Preencha usuário e senha'; errorDiv.style.display = 'block'; }
+      showToast('Preencha usuário e senha', true);
+      return;
+    }
+    
+    // Se não houver usuários no localStorage (apenas os padrões), tenta buscar da planilha
+    var users = this.getUsers();
+    if (!users || users.length <= 2) { // só os padrões
+      showToast('Sincronizando usuários da planilha...');
+      await GoogleSheetsSync.fetchFromSheet();
+      users = this.getUsers();
+    }
+    
+    var user = users.find(u => u.login === login && u.senha === senha);
+    if (!user) {
+      if (errorDiv) { errorDiv.innerHTML = '❌ Usuário ou senha inválidos!'; errorDiv.style.display = 'block'; }
+      showToast('Usuário ou senha inválidos!', true);
+      document.getElementById('loginPassword').value = '';
+      return;
+    }
+    this.currentUser = user;
+    localStorage.setItem('marlift_current_user', JSON.stringify(user));
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    document.getElementById('currentUserName').innerHTML = user.nome;
+    this.updatePermissions();
+    showToast(`Bem-vindo, ${user.nome}!`);
+    App.init();
+    if (user.nivel === 'tecnico') {
+      setTimeout(() => { Jornada.carregar(); }, 500);
+    }
+  },
   logout() { this.currentUser=null; localStorage.removeItem('marlift_current_user'); Timer.cleanup(); document.getElementById('loginScreen').style.display='flex'; document.getElementById('appContainer').style.display='none'; },
   checkSession() { var saved = localStorage.getItem('marlift_current_user'); if(saved){ this.currentUser = JSON.parse(saved); document.getElementById('loginScreen').style.display='none'; document.getElementById('appContainer').style.display='block'; document.getElementById('currentUserName').innerHTML = this.currentUser.nome; this.updatePermissions(); return true; } return false; },
   updatePermissions() { if(!this.currentUser) return; var isAdmin = this.currentUser.nivel === 'admin'; var isTecnico = this.currentUser.nivel === 'tecnico'; var tabAgendamentos = document.getElementById('tabAgendamentosBtn'); var tabJornada = document.getElementById('tabJornadaBtn'); var tabPermissoes = document.getElementById('tabPermissoesBtn'); var tabUsuarios = document.getElementById('tabUsuariosBtn'); if(tabAgendamentos) tabAgendamentos.style.display = isAdmin ? 'inline-flex' : 'none'; if(tabJornada) tabJornada.style.display = isTecnico ? 'inline-flex' : 'none'; if(tabPermissoes) tabPermissoes.style.display = isAdmin ? 'inline-flex' : 'none'; if(tabUsuarios) tabUsuarios.style.display = isAdmin ? 'inline-flex' : 'none'; },
@@ -562,7 +631,7 @@ var Permissoes = {
   },
   carregar: function() { var salvas = localStorage.getItem('marlift_permissoes_tecnico'); if (salvas) return JSON.parse(salvas); return JSON.parse(JSON.stringify(this.permissoesPadrao)); },
   salvar: function() { var permissoes = {}; for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) permissoes[key] = chk.checked; } localStorage.setItem('marlift_permissoes_tecnico', JSON.stringify(permissoes)); showToast('Permissões salvas'); GoogleSheetsSync.syncPermissoes(permissoes); },
-  resetarPadrao: function() { for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) chk.checked = this.permissoesPadrao[key]; } showToast('Permissões restauradas'); this.salvar(); },
+  resetarPadrao: function() { for (var key in this.permissoesPadrao) { var chk = document.getElementById('perm_' + key); if (chk) chk.checked = this.permissoesPadrao[key]; } this.salvar(); },
   carregarNaInterface: function() { var p = this.carregar(); for (var k in p) { var chk = document.getElementById('perm_' + k); if (chk) chk.checked = p[k]; } }
 };
 
