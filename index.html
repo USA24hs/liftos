@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <title>Lift OS - Sistema Profissional v10.0</title>
+  <title>Lift OS - Sistema Profissional</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -316,8 +316,8 @@
     <h1 class="font-display text-3xl text-center mb-2"><span class="logo-lift">LIFT</span> <span class="logo-os">OS</span></h1>
     <p class="text-center text-sm mb-6 subtitle">Sistema de Ordem de Serviço</p>
     <div class="space-y-4">
-      <div><label class="block text-xs mb-1 font-semibold">Usuário</label><input type="text" id="loginUsername" class="form-input" placeholder="admin ou tecnico" autocomplete="off" autofocus></div>
-      <div><label class="block text-xs mb-1 font-semibold">Senha</label><input type="password" id="loginPassword" class="form-input" placeholder="admin123 ou 123456" onkeypress="if(event.key==='Enter')Auth.login()"></div>
+      <div><label class="block text-xs mb-1 font-semibold">👨🏻‍🔧 Usuário</label><input type="text" id="loginUsername" class="form-input" placeholder="" autocomplete="off" autofocus></div>
+      <div><label class="block text-xs mb-1 font-semibold">🔑 Senha</label><input type="password" id="loginPassword" class="form-input" placeholder="" onkeypress="if(event.key==='Enter')Auth.login()"></div>
       <button onclick="Auth.login()" class="btn btn-primary w-full"><i class="fas fa-sign-in-alt"></i> Entrar</button>
       <a href="javascript:void(0)" onclick="Auth.recoverPassword()" class="btn btn-whatsapp w-full text-sm no-underline"><i class="fab fa-whatsapp text-lg"></i> Esqueci minha senha</a>
       <div id="loginErrorMessage" class="login-error"></div>
@@ -413,6 +413,7 @@
       <button class="tab-button" data-tab="tab-jornada" id="tabJornadaBtn" style="display:none">Minha Jornada</button>
       <button class="tab-button" data-tab="tab-permissoes" id="tabPermissoesBtn" style="display:none">Permissões</button>
       <button class="tab-button" data-tab="tab-usuarios" id="tabUsuariosBtn" style="display:none">Usuários</button>
+      <button class="tab-button" data-tab="tab-preventivas" id="tabPreventivasBtn" style="display:none">Preventivas</button>
     </div>
 
     <!-- TAB ORÇAMENTO -->
@@ -438,7 +439,7 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div><label class="block text-xs text-[var(--muted)] mb-1">Cliente *</label><input type="text" id="orc_cliente" class="form-input" list="orcClientesList" placeholder="Selecione ou digite"><datalist id="orcClientesList"></datalist></div>
-          <div><label class="block text-xs text-[var(--muted)] mb-1">Equipamento</label><input type="text" id="orc_equipamento" class="form-input" placeholder="Marca / Modelo"></div>
+          <div><label class="block text-xs text-[var(--muted)] mb-1">Equipamento: Marca/Modelo</label><input type="text" id="orc_equipamento" class="form-input" placeholder="Marca / Modelo"></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div><label class="block text-xs text-[var(--muted)] mb-1">Série / Combustível</label><input type="text" id="orc_serie_hor" class="form-input" placeholder="N° Série - Combustível"></div>
@@ -745,7 +746,26 @@
         <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-[var(--bg-secondary)]"><tr><th class="p-2">Nome</th><th class="p-2">Login</th><th class="p-2">Nível</th><th class="p-2">Ações</th></tr></thead><tbody id="userTableBody"></tbody></table></div>
       </div>
     </div>
-
+    <!-- TAB PREVENTIVAS -->
+        <div id="tab-preventivas" class="tab-content">
+  <div class="checklist-card p-4 md:p-5 mb-5">
+    <div class="flex justify-between items-center flex-wrap gap-3 mb-4">
+      <h2 class="font-display text-xl"><i class="fas fa-tasks"></i> Regras de Manutenção Preventiva</h2>
+      <button onclick="Preventivas.novaRegra()" class="btn btn-primary text-sm"><i class="fas fa-plus"></i> Nova Regra</button>
+    </div>
+    <div id="preventivasRegrasList"></div>
+  </div>
+  <div class="checklist-card p-4 md:p-5">
+    <h2 class="font-display text-xl mb-4"><i class="fas fa-chart-line"></i> Status das Empilhadeiras</h2>
+    <div class="overflow-x-auto">
+      <table class="table-os" id="preventivasStatusTable">
+        <thead><tr><th>Equipamento</th><th>Cliente</th><th>Último Horímetro</th><th>Próxima Preventiva</th><th>Status</th><th>Regras Aplicáveis</th></tr></thead>
+        <tbody id="preventivasStatusBody"></tbody>
+      </table>
+    </div>
+    <div id="preventivasEmpty" class="text-center py-8 text-[var(--muted)] hidden">Nenhum equipamento com OS registrada.</div>
+  </div>
+</div>
   </main>
 
   <div id="toastCenter" class="toast-center"><i class="fas fa-check-circle text-green-500 text-xl"></i><span id="toastMessage">Operação realizada</span></div>
@@ -801,7 +821,8 @@ var State={
   osCounter:0,orcCounter:0,pecaCounter:0,agendamentos:[],jornada:{},timerStartRealTime:0,timerPausedAccum:0,
   onlineUsers:[],_initDone:false,
   pecas:[],movimentosEstoque:[],orcamentos:[],notificacoes:[],lastSeenOSIds:[],
-  selectedClientForOs:null, selectedEquipForOs:null
+  selectedClientForOs:null, selectedEquipForOs:null,
+  preventivasRegras: []
 };
 
 var Storage={
@@ -818,7 +839,9 @@ var Storage={
   saveMovimentos:function(){this.save('movimentos',State.movimentosEstoque)},loadMovimentos:function(){State.movimentosEstoque=this.load('movimentos')||[]},
   saveOrcamentos:function(){this.save('orcamentos',State.orcamentos)},loadOrcamentos:function(){State.orcamentos=this.load('orcamentos')||[]},
   saveNotificacoes:function(){this.save('notificacoes',State.notificacoes)},loadNotificacoes:function(){State.notificacoes=this.load('notificacoes')||[]},
-  saveLastSeen:function(){this.save('last_seen_os',State.lastSeenOSIds)},loadLastSeen:function(){State.lastSeenOSIds=this.load('last_seen_os')||[]}
+  saveLastSeen:function(){this.save('last_seen_os',State.lastSeenOSIds)},loadLastSeen:function(){State.lastSeenOSIds=this.load('last_seen_os')||[]},
+  savePreventivas: function() { this.save('preventivas_regras', State.preventivasRegras); },
+      loadPreventivas: function(){ State.preventivasRegras = this.load('preventivas_regras')||[]}
 };
 
 var SyncUI={set:function(m,c){var s=$('syncStatusText');if(s)s.textContent=m;var d=$('hbDot');if(d)d.className='hb-dot '+(c||'');var ss=$('syncStatus');if(ss)ss.className='sync-status'+(c?' '+c:'')}};
@@ -967,7 +990,9 @@ var Heartbeat={_timer:null,_lastPing:0,_pending:false,_status:'offline',
 
 var Auth={currentUser:null,inactivityTimer:null,
   permissoes:{
-    admin:{criar_os:true,editar_os:true,excluir_os:true,mudar_status:true,salvar_os:true,checklist_visualizar:true,checklist_preencher:true,fotos_horimetro:true,fotos_servico:true,fotos_pendencias:true,assinatura_tecnico:true,assinatura_cliente:true,timer_controle:true,horas_editar:true,gerar_pdf:true,enviar_email:true,enviar_whatsapp:true,sincronizar:true,limpar_fila:true,baixar_dados:true,heartbeat:true,clientes_cadastrar:true,clientes_editar:true,clientes_excluir:true,clientes_exportar_csv:true,clientes_importar_csv:true,clientes_visualizar:true,historico_visualizar:true,historico_excluir:true,historico_exportar_csv:true,historico_importar_csv:true,historico_limpar:true,agendamentos_criar:true,agendamentos_editar:true,agendamentos_excluir:true,agendamentos_concluir:true,agendamentos_visualizar:true,usuarios_criar:true,usuarios_editar:true,usuarios_excluir:true,usuarios_visualizar:true,permissoes_editar:true,jornada_registrar:false,estoque_cadastrar:true,estoque_editar:true,estoque_excluir:true,estoque_movimentar:true,orcamento_criar:true,orcamento_editar:true,orcamento_excluir:true,orcamento_aprovar:true,orcamento_visualizar:true},
+    admin:{criar_os:true,editar_os:true,excluir_os:true,mudar_status:true,salvar_os:true,checklist_visualizar:true,checklist_preencher:true,fotos_horimetro:true,fotos_servico:true,fotos_pendencias:true,assinatura_tecnico:true,assinatura_cliente:true,timer_controle:true,horas_editar:true,gerar_pdf:true,enviar_email:true,enviar_whatsapp:true,sincronizar:true,limpar_fila:true,baixar_dados:true,heartbeat:true,clientes_cadastrar:true,clientes_editar:true,clientes_excluir:true,clientes_exportar_csv:true,clientes_importar_csv:true,clientes_visualizar:true,historico_visualizar:true,historico_excluir:true,historico_exportar_csv:true,historico_importar_csv:true,historico_limpar:true,agendamentos_criar:true,agendamentos_editar:true,agendamentos_excluir:true,agendamentos_concluir:true,agendamentos_visualizar:true,usuarios_criar:true,usuarios_editar:true,usuarios_excluir:true,usuarios_visualizar:true,permissoes_editar:true,jornada_registrar:false,estoque_cadastrar:true,estoque_editar:true,estoque_excluir:true,estoque_movimentar:true,orcamento_criar:true,orcamento_editar:true,orcamento_excluir:true,orcamento_aprovar:true,orcamento_visualizar:true
+        ,preventivas_visualizar: true
+        ,preventivas_editar: true},
     tecnico:{criar_os:false,editar_os:true,excluir_os:false,mudar_status:true,salvar_os:true,checklist_visualizar:true,checklist_preencher:true,fotos_horimetro:true,fotos_servico:true,fotos_pendencias:true,assinatura_tecnico:true,assinatura_cliente:true,timer_controle:true,horas_editar:true,gerar_pdf:true,enviar_email:true,enviar_whatsapp:true,sincronizar:true,limpar_fila:true,baixar_dados:true,heartbeat:true,clientes_cadastrar:false,clientes_editar:false,clientes_excluir:false,clientes_exportar_csv:false,clientes_importar_csv:false,clientes_visualizar:true,historico_visualizar:true,historico_excluir:false,historico_exportar_csv:false,historico_importar_csv:false,historico_limpar:false,agendamentos_criar:false,agendamentos_editar:false,agendamentos_excluir:false,agendamentos_concluir:false,agendamentos_visualizar:false,usuarios_criar:false,usuarios_editar:false,usuarios_excluir:false,usuarios_visualizar:false,permissoes_editar:false,jornada_registrar:true,estoque_cadastrar:false,estoque_editar:false,estoque_excluir:false,estoque_movimentar:true,orcamento_criar:true,orcamento_editar:true,orcamento_excluir:false,orcamento_aprovar:false,orcamento_visualizar:true},
     visualizador:{criar_os:false,editar_os:true,excluir_os:false,mudar_status:true,salvar_os:true,checklist_visualizar:true,checklist_preencher:true,fotos_horimetro:true,fotos_servico:true,fotos_pendencias:true,assinatura_tecnico:true,assinatura_cliente:true,timer_controle:false,horas_editar:false,gerar_pdf:true,enviar_email:true,enviar_whatsapp:true,sincronizar:true,limpar_fila:true,baixar_dados:true,heartbeat:false,clientes_cadastrar:false,clientes_editar:false,clientes_excluir:false,clientes_exportar_csv:false,clientes_importar_csv:false,clientes_visualizar:true,historico_visualizar:true,historico_excluir:false,historico_exportar_csv:false,historico_importar_csv:false,historico_limpar:false,agendamentos_criar:false,agendamentos_editar:false,agendamentos_excluir:false,agendamentos_concluir:false,agendamentos_visualizar:true,usuarios_criar:false,usuarios_editar:false,usuarios_excluir:false,usuarios_visualizar:false,permissoes_editar:false,jornada_registrar:false,estoque_cadastrar:false,estoque_editar:false,estoque_excluir:false,estoque_movimentar:false,orcamento_criar:false,orcamento_editar:false,orcamento_excluir:false,orcamento_aprovar:false,orcamento_visualizar:true}
   },
@@ -985,7 +1010,9 @@ var Auth={currentUser:null,inactivityTimer:null,
   updatePermissions:function(){
     if(!this.currentUser)return;var a=this.isAdmin(),t=this.isTecnico(),badge=$('currentUserNivel');
     if(badge){if(a){badge.textContent='ADMIN';badge.style.background='rgba(249,115,22,.2)';badge.style.color='#fb923c'}else if(t){badge.textContent='TÉCNICO';badge.style.background='rgba(59,130,246,.2)';badge.style.color='#60a5fa'}else{badge.textContent='VISUALIZADOR';badge.style.background='rgba(107,114,128,.2)';badge.style.color='#9ca3af'}}
-    var tabs={tabOrcamentoBtn:'orcamento_visualizar',tabEstoqueBtn:'estoque_cadastrar',tabAgendamentosBtn:'agendamentos_visualizar',tabJornadaBtn:'jornada_registrar',tabPermissoesBtn:'permissoes_editar',tabUsuariosBtn:'usuarios_visualizar'};
+    var tabs={tabOrcamentoBtn:'orcamento_visualizar',tabEstoqueBtn:'estoque_cadastrar',tabAgendamentosBtn:'agendamentos_visualizar',tabJornadaBtn:'jornada_registrar',tabPermissoesBtn:'permissoes_editar',tabUsuariosBtn:'usuarios_visualizar'
+        ,tabPreventivasBtn:'preventivas_visualizar'
+    };
     for(var k in tabs){var el=$(k);if(el)el.style.display=this.can(tabs[k])?'inline-flex':'none'}
     var estTab=$('tabEstoqueBtn');if(estTab)estTab.style.display=this.can('estoque_cadastrar')||this.can('estoque_movimentar')||this.can('estoque_editar')?'inline-flex':'none';
     var btns={btnNovaOS:'criar_os',btnSync:'sincronizar',btnDownload:'baixar_dados'};for(var k2 in btns){var e2=$(k2);if(e2){e2.disabled=!this.can(btns[k2])}}
@@ -1120,7 +1147,7 @@ var Utils={
 };
 
 var App={
-  init:function(){if(State._initDone)return;State._initDone=true;Storage.loadCounter();Storage.loadOrcCounter();Storage.loadPecaCounter();Storage.loadPecas();Storage.loadMovimentos();Storage.loadOrcamentos();Storage.loadLastSeen();Clientes.load();Historico.load();Agendamentos.carregar();this.populateMarcas();Checklist.render();Signature.init();Fotos.init();Horas.initListeners();Utils.setDefaultDate();this.setupTabs();this.setupMarcaSelect();this.setupSearch();this.setupAgendamentoOS();this.setupEstoqueListeners();Timer.restoreTimer();Notificacoes.init();SignatureOrc.init();if(Auth.isTecnico()&&Auth.can('jornada_registrar')){Jornada.carregar();setTimeout(function(){var tb=document.querySelector('.tab-button[data-tab="tab-jornada"]');if(tb)tb.click()},2000)}State.currentStatus='abertura';this.updateUI();UserManager.render();Estoque.renderPecas();Estoque.renderMovimentos();Estoque.updateStats();Estoque.preencherSelectPecas();Estoque.preencherOSList();Orcamento.preencherClientesOrc();Orcamento.novo();Orcamento.renderLista();Orcamento.updateStats();var pc=$('permissoesContainer');if(pc&&Auth.can('permissoes_editar')){var h='';for(var k in Permissoes.padrao)h+='<div class="permission-item"><label><input type="checkbox" id="perm_'+k+'"> '+esc(k.replace(/_/g,' ').toUpperCase())+'</label></div>';pc.innerHTML=h;Permissoes.carregarNaInterface()}if(Auth.can('sincronizar')){window.addEventListener('online',function(){showToast('Conexao restaurada');SyncQueue.scheduleProcess()});setTimeout(function(){GoogleSheetsSync.fetchFromSheet()},1500)}if(Auth.can('heartbeat'))Heartbeat.start();SyncUI.set(navigator.onLine?'Online':'Offline',navigator.onLine?'ok':'offline');window.addEventListener('online',function(){SyncUI.set('Online','ok')});window.addEventListener('offline',function(){SyncUI.set('Offline','offline')});ThemeManager.init();},
+  init:function(){if(State._initDone)return;State._initDone=true;Storage.loadCounter();Storage.loadOrcCounter();Storage.loadPecaCounter();Storage.loadPecas();Storage.loadMovimentos();Storage.loadOrcamentos();Storage.loadLastSeen();Clientes.load();Historico.load();Agendamentos.carregar();this.populateMarcas();Checklist.render();Signature.init();Fotos.init();Horas.initListeners();Utils.setDefaultDate();this.setupTabs();this.setupMarcaSelect();this.setupSearch();this.setupAgendamentoOS();this.setupEstoqueListeners();Timer.restoreTimer();Notificacoes.init();SignatureOrc.init();if(Auth.isTecnico()&&Auth.can('jornada_registrar')){Jornada.carregar();setTimeout(function(){var tb=document.querySelector('.tab-button[data-tab="tab-jornada"]');if(tb)tb.click()},2000)}State.currentStatus='abertura';this.updateUI();UserManager.render();Estoque.renderPecas();Estoque.renderMovimentos();Estoque.updateStats();Estoque.preencherSelectPecas();Estoque.preencherOSList();Orcamento.preencherClientesOrc();Orcamento.novo();Orcamento.renderLista();Orcamento.updateStats();var pc=$('permissoesContainer');if(pc&&Auth.can('permissoes_editar')){var h='';for(var k in Permissoes.padrao)h+='<div class="permission-item"><label><input type="checkbox" id="perm_'+k+'"> '+esc(k.replace(/_/g,' ').toUpperCase())+'</label></div>';pc.innerHTML=h;Permissoes.carregarNaInterface()}if(Auth.can('sincronizar')){window.addEventListener('online',function(){showToast('Conexao restaurada');SyncQueue.scheduleProcess()});setTimeout(function(){GoogleSheetsSync.fetchFromSheet()},1500)}if(Auth.can('heartbeat'))Heartbeat.start();SyncUI.set(navigator.onLine?'Online':'Offline',navigator.onLine?'ok':'offline');window.addEventListener('online',function(){SyncUI.set('Online','ok')});window.addEventListener('offline',function(){SyncUI.set('Offline','offline')});ThemeManager.init();Preventivas.init();},
   setupEstoqueListeners:function(){var sel=$('mov_peca');if(sel)sel.addEventListener('change',function(){Estoque.mostrarEstoqueAtual()});var custo=$('est_preco_custo'),margem=$('est_margem'),venda=$('est_preco_venda');if(custo)custo.addEventListener('input',function(){Estoque.calcFromCusto()});if(margem)margem.addEventListener('input',function(){Estoque.calcFromMargem()});if(venda)venda.addEventListener('input',function(){Estoque.calcFromVenda()});document.addEventListener('click',function(e){var box=$('calcBox');if(!box||!box.classList.contains('show'))return;var form=$('estoqueFormCard');if(form&&form.contains(e.target))return;if(box.contains(e.target))return;Estoque.hideCalcBox();});},
   setupAgendamentoOS:function(){var s=$('ag_tecnico');if(s)s.addEventListener('change',function(){Agendamentos.carregarOSDisponiveis(s.value)})},
   populateMarcas:function(){var s=$('marcaSelect');if(!s)return;s.innerHTML='<option value="">Selecione</option>';Config.marcas.forEach(function(m){if(m!=='OUTRA')s.innerHTML+='<option value="'+m+'">'+m+'</option>'});s.innerHTML+='<option value="OUTRA">OUTRA</option>'},
@@ -1147,6 +1174,90 @@ var App={
   escolherOpcao:function(opcao){$('choiceModal').style.display='none';if(opcao==='os'){Clientes.carregarDadosNaOS();var num=Utils.generateOSNumber();$('numeroOS').value=num;State.currentStatus='abertura';App.updateUI();showToast('Nova OS criada com os dados selecionados');document.querySelector('.tab-button[data-tab="tab-os"]').click();}else if(opcao==='orcamento'){Orcamento.novo();Clientes.carregarDadosNoOrcamento();showToast('Novo orçamento criado com os dados selecionados');document.querySelector('.tab-button[data-tab="tab-orcamento"]').click();}},
   mostrarModalEquipamentos:function(cl){var md=$('equipModal'),el=$('equipList');el.innerHTML='';if(cl.equipamentos&&cl.equipamentos.length){cl.equipamentos.forEach(function(eq){var d=document.createElement('div');d.className='equip-option';d.innerHTML='<div><strong><i class="fas fa-forklift"></i> '+esc(eq.marca||'N/A')+' '+esc(eq.modelo||'')+'</strong></div><div class="text-sm text-[var(--muted)]">Serie: '+esc(eq.serie||'N/A')+' | Qtd: '+(eq.qtd||1)+'</div>';d.onclick=function(){State.selectedEquipForOs=eq;md.style.display='none';Clientes.mostrarModalEscolhaOSouOrcamento();};el.appendChild(d)})}else{el.innerHTML='<div class="text-center py-4 text-[var(--muted)]">Nenhum equipamento.</div>';var b=document.createElement('button');b.className='btn btn-primary w-full mt-2';b.innerHTML='Continuar sem equipamento';b.onclick=function(){State.selectedEquipForOs=null;md.style.display='none';Clientes.mostrarModalEscolhaOSouOrcamento();};el.appendChild(b)}md.style.display='flex'},
   carregarEquipamento:function(eq,cl){Utils.setVal('cliente',cl.nome);Utils.setVal('cnpj',cl.cnpj);Utils.setVal('cidadeCliente',cl.cidade);Utils.setVal('endereco',cl.endereco);Utils.setVal('whatsappCliente',cl.whatsapp);var ms=$('marcaSelect');if(ms){var mk=eq.marca||'';if(Config.marcas.indexOf(mk)!==-1){ms.value=mk;$('marcaOutraDiv').style.display='none'}else if(mk){ms.value='OUTRA';Utils.setVal('marcaOutra',mk);$('marcaOutraDiv').style.display='block'}}Utils.setVal('modelo',eq.modelo||'');Utils.setVal('numSerie',eq.serie||'');if(eq.combustivel)Utils.setVal('combustivel',eq.combustivel);showToast('Equipamento carregado');document.querySelector('.tab-button[data-tab="tab-os"]').click()}
+};
+
+// ======================== MÓDULO PREVENTIVAS ========================
+var Preventivas = {
+  init: function() { Storage.loadPreventivas(); this.renderRegras(); this.atualizarStatus(); },
+  novaRegra: function() {
+    var desc = prompt("Descrição da regra (ex: Troca de Óleo do Motor):");
+    if(!desc) return;
+    var intervalo = parseInt(prompt("Intervalo em horas (ex: 500):"));
+    if(isNaN(intervalo) || intervalo <= 0) { showToast("Intervalo inválido", true); return; }
+    State.preventivasRegras.push({ id: Date.now(), descricao: desc, intervalo_horas: intervalo });
+    Storage.savePreventivas(); this.renderRegras(); this.atualizarStatus(); showToast("Regra adicionada");
+  },
+  salvarRegra: function(id, campo, valor) {
+    var idx = State.preventivasRegras.findIndex(r => r.id == id);
+    if(idx === -1) return;
+    if(campo === 'descricao') State.preventivasRegras[idx].descricao = valor;
+    else if(campo === 'intervalo') State.preventivasRegras[idx].intervalo_horas = parseInt(valor);
+    Storage.savePreventivas(); this.atualizarStatus();
+  },
+  excluirRegra: function(id) {
+    if(confirm("Excluir regra?")) { State.preventivasRegras = State.preventivasRegras.filter(r => r.id != id); Storage.savePreventivas(); this.renderRegras(); this.atualizarStatus(); showToast("Regra excluída"); }
+  },
+  renderRegras: function() {
+    var container = $('#preventivasRegrasList');
+    if(!container) return;
+    if(!State.preventivasRegras.length) { container.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhuma regra cadastrada. Clique em "Nova Regra".</div>'; return; }
+    var html = '<div class="space-y-3">';
+    State.preventivasRegras.forEach(r => { html += '<div class="flex flex-wrap items-center gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border)]"><input type="text" value="'+esc(r.descricao)+'" onchange="Preventivas.salvarRegra('+r.id+',\'descricao\',this.value)" class="form-input flex-1 min-w-[150px]"><span class="text-sm">a cada</span><input type="number" value="'+r.intervalo_horas+'" onchange="Preventivas.salvarRegra('+r.id+',\'intervalo\',this.value)" class="form-input w-24 text-center"><span class="text-sm">horas</span><button onclick="Preventivas.excluirRegra('+r.id+')" class="text-red-500"><i class="fas fa-trash"></i></button></div>'; });
+    html += '</div>'; container.innerHTML = html;
+  },
+  getUltimoHorimetroPorEquipamento: function(clienteNome, modelo, serie) {
+    var ultimo = null;
+    State.osHistory.forEach(function(os) {
+      if(os.status !== 'aprovada' && os.status !== 'fechada') return;
+      if(os.cliente !== clienteNome) return;
+      var match = true;
+      if(modelo && os.modelo && os.modelo.toLowerCase() !== modelo.toLowerCase()) match = false;
+      if(serie && os.numSerie && os.numSerie !== serie) match = false;
+      if(!match) return;
+      var hor = os.horimetro ? parseInt(os.horimetro.replace(/[^0-9]/g,'')) : null;
+      if(hor && !isNaN(hor)) { if(ultimo === null || hor > ultimo) ultimo = hor; }
+    });
+    return ultimo;
+  },
+  atualizarStatus: function() {
+    var tbody = $('#preventivasStatusBody'), emptyDiv = $('#preventivasEmpty');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    var equipamentos = [];
+    State.clients.forEach(cli => { if(cli.equipamentos && cli.equipamentos.length) { cli.equipamentos.forEach(eq => { equipamentos.push({ cliente: cli.nome, marca: eq.marca, modelo: eq.modelo, serie: eq.serie, combustivel: eq.combustivel }); }); } });
+    State.osHistory.forEach(os => { if(!os.cliente) return; var existe = equipamentos.some(eq => eq.cliente === os.cliente && eq.modelo === os.modelo && eq.serie === os.numSerie); if(!existe && (os.modelo || os.numSerie)) equipamentos.push({ cliente: os.cliente, marca: os.marca, modelo: os.modelo, serie: os.numSerie, combustivel: os.combustivel }); });
+    if(equipamentos.length === 0) { if(emptyDiv) emptyDiv.classList.remove('hidden'); return; }
+    if(emptyDiv) emptyDiv.classList.add('hidden');
+    equipamentos.forEach(function(eq) {
+      var ultimoHor = Preventivas.getUltimoHorimetroPorEquipamento(eq.cliente, eq.modelo, eq.serie);
+      var linha = '<tr>';
+      linha += '<td><strong>' + esc((eq.marca||'') + ' ' + (eq.modelo||'')) + '</strong><br><span class="text-xs text-[var(--muted)]">Série: ' + esc(eq.serie||'N/I') + '</span></td>';
+      linha += '<td>' + esc(eq.cliente) + '</td>';
+      linha += '<td class="font-mono">' + (ultimoHor !== null ? ultimoHor + ' h' : 'N/A') + '</td>';
+      var proximaInfo = { horasProx: null, statusText: 'Sem dados', statusClass: 'text-[var(--muted)]', regrasAplicadas: [] };
+      if(ultimoHor !== null) {
+        var menorProxima = null;
+        State.preventivasRegras.forEach(function(regra) {
+          var prox = Math.floor(ultimoHor / regra.intervalo_horas) * regra.intervalo_horas + regra.intervalo_horas;
+          var faltam = prox - ultimoHor;
+          proximaInfo.regrasAplicadas.push(regra.descricao + ' (' + regra.intervalo_horas + 'h) → em ' + faltam + 'h');
+          if(menorProxima === null || prox < menorProxima) menorProxima = prox;
+        });
+        if(menorProxima !== null) {
+          var faltamTotal = menorProxima - ultimoHor;
+          proximaInfo.horasProx = menorProxima;
+          if(faltamTotal <= 0) { proximaInfo.statusText = 'VENCIDO'; proximaInfo.statusClass = 'text-[var(--danger)] font-bold'; }
+          else if(faltamTotal <= 50) { proximaInfo.statusText = 'PRÓXIMO (≤ 50h)'; proximaInfo.statusClass = 'text-[var(--warning)] font-bold'; }
+          else { proximaInfo.statusText = 'OK'; proximaInfo.statusClass = 'text-[var(--success)]'; }
+        }
+      }
+      linha += '<td class="font-mono">' + (proximaInfo.horasProx ? proximaInfo.horasProx + ' h' : '—') + '</td>';
+      linha += '<td class="' + proximaInfo.statusClass + '">' + proximaInfo.statusText + '</td>';
+      linha += '<td class="text-xs">' + (proximaInfo.regrasAplicadas.length ? proximaInfo.regrasAplicadas.join('<br>') : 'Nenhuma regra') + '</td>';
+      linha += '</tr>';
+      tbody.innerHTML += linha;
+    });
+  }
 };
 
 function adicionarCampoEquipamento(marca,modelo,serie,qtd,combustivel){marca=marca||'';modelo=modelo||'';serie=serie||'';qtd=qtd||1;combustivel=combustivel||'';var ct=$('equipamentosList');if(!ct)return;var d=document.createElement('div');d.className='equip-item';var opts='<option value="">Selecione</option>';Config.marcas.forEach(function(m){if(m!=='OUTRA')opts+='<option value="'+m+'"'+(marca===m?' selected':'')+'>'+m+'</option>'});opts+='<option value="OUTRA"'+(marca==='OUTRA'?' selected':'')+'>OUTRA</option>';d.innerHTML='<select class="form-input w-28 equip-marca">'+opts+'</select><div class="outra-marca-container" style="display:'+(marca==='OUTRA'?'block':'none')+'"><input type="text" placeholder="Marca" class="form-input w-28 outra-marca" value="'+esc(marca==='OUTRA'?'':marca)+'"></div><input type="text" placeholder="Modelo" class="form-input w-28 equip-modelo" value="'+esc(modelo)+'"><input type="text" placeholder="Serie" class="form-input w-28 equip-serie" value="'+esc(serie)+'"><input type="number" placeholder="Qtd" class="form-input w-20 equip-qtd" value="'+qtd+'"><select class="form-input w-28 equip-combustivel"><option value="">Comb.</option><option value="eletrico"'+(combustivel==='eletrico'?' selected':'')+'>Eletrico</option><option value="diesel"'+(combustivel==='diesel'?' selected':'')+'>Diesel</option><option value="gasolina"'+(combustivel==='gasolina'?' selected':'')+'>Gasolina</option><option value="glp"'+(combustivel==='glp'?' selected':'')+'>GLP</option></select><button type="button" class="text-red-500" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>';ct.appendChild(d);var sel=d.querySelector('.equip-marca'),od=d.querySelector('.outra-marca-container');sel.addEventListener('change',function(){od.style.display=sel.value==='OUTRA'?'block':'none';if(sel.value!=='OUTRA'){var oi=d.querySelector('.outra-marca');if(oi)oi.value=''}})}
