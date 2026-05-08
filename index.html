@@ -747,23 +747,40 @@
       </div>
     </div>
     <!-- TAB PREVENTIVAS -->
-        <div id="tab-preventivas" class="tab-content">
+<div id="tab-preventivas" class="tab-content">
   <div class="checklist-card p-4 md:p-5 mb-5">
-    <div class="flex justify-between items-center flex-wrap gap-3 mb-4">
-      <h2 class="font-display text-xl"><i class="fas fa-tasks"></i> Regras de Manutenção Preventiva</h2>
-      <button onclick="Preventivas.novaRegra()" class="btn btn-primary text-sm"><i class="fas fa-plus"></i> Nova Regra</button>
+    <h2 class="font-display text-xl mb-4"><i class="fas fa-cog"></i> Regras de Manutenção Preventiva</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+      <input type="text" id="prev_descricao" class="form-input" placeholder="Descrição (ex: Troca de óleo)">
+      <input type="number" id="prev_intervalo" class="form-input" placeholder="Intervalo (horas)">
+      <select id="prev_marca" class="form-input"><option value="">Todas as marcas</option></select>
+      <input type="text" id="prev_modelo" class="form-input" placeholder="Modelo específico (opcional)">
     </div>
-    <div id="preventivasRegrasList"></div>
+    <input type="hidden" id="prev_editId" value="">
+    <div class="flex gap-3 flex-wrap">
+      <button onclick="Preventivas.salvarRegra()" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Regra</button>
+      <button id="btnPrevCancelar" onclick="Preventivas.cancelarEdicao()" class="btn btn-secondary" style="display:none">Cancelar</button>
+    </div>
   </div>
-  <div class="checklist-card p-4 md:p-5">
-    <h2 class="font-display text-xl mb-4"><i class="fas fa-chart-line"></i> Status das Empilhadeiras</h2>
+
+  <div class="checklist-card p-4 md:p-5 mb-5">
+    <h2 class="font-display text-xl mb-3"><i class="fas fa-list"></i> Regras Cadastradas</h2>
     <div class="overflow-x-auto">
-      <table class="table-os" id="preventivasStatusTable">
-        <thead><tr><th>Equipamento</th><th>Cliente</th><th>Último Horímetro</th><th>Próxima Preventiva</th><th>Status</th><th>Regras Aplicáveis</th></tr></thead>
-        <tbody id="preventivasStatusBody"></tbody>
+      <table class="table-os">
+        <thead><tr><th>Descrição</th><th>Intervalo</th><th>Marca</th><th>Modelo</th><th>Ações</th></tr></thead>
+        <tbody id="prevRegrasBody"></tbody>
       </table>
     </div>
-    <div id="preventivasEmpty" class="text-center py-8 text-[var(--muted)] hidden">Nenhum equipamento com OS registrada.</div>
+  </div>
+
+  <div class="checklist-card p-4 md:p-5">
+    <h2 class="font-display text-xl mb-3"><i class="fas fa-chart-line"></i> Previsão de Próximas Manutenções</h2>
+    <div class="overflow-x-auto">
+      <table class="table-os" id="prevPrevisaoTable">
+        <thead><tr><th>Cliente</th><th>Equipamento</th><th>Horímetro Atual</th><th>Serviço</th><th>Próxima (h)</th><th>Status</th></tr></thead>
+        <tbody id="prevPrevisaoBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
   </main>
@@ -1176,86 +1193,204 @@ var App={
   carregarEquipamento:function(eq,cl){Utils.setVal('cliente',cl.nome);Utils.setVal('cnpj',cl.cnpj);Utils.setVal('cidadeCliente',cl.cidade);Utils.setVal('endereco',cl.endereco);Utils.setVal('whatsappCliente',cl.whatsapp);var ms=$('marcaSelect');if(ms){var mk=eq.marca||'';if(Config.marcas.indexOf(mk)!==-1){ms.value=mk;$('marcaOutraDiv').style.display='none'}else if(mk){ms.value='OUTRA';Utils.setVal('marcaOutra',mk);$('marcaOutraDiv').style.display='block'}}Utils.setVal('modelo',eq.modelo||'');Utils.setVal('numSerie',eq.serie||'');if(eq.combustivel)Utils.setVal('combustivel',eq.combustivel);showToast('Equipamento carregado');document.querySelector('.tab-button[data-tab="tab-os"]').click()}
 };
 
-// ======================== MÓDULO PREVENTIVAS ========================
+// ==========================================
+// MÓDULO: PREVENTIVAS (Manutenção por Horímetro)
+// ==========================================
+
+// 1. Atualizar o State e Storage
+State.regrasPreventivas = [];
+Storage.saveRegrasPreventivas = function(){ this.save('regras_preventivas', State.regrasPreventivas) };
+Storage.loadRegrasPreventivas = function(){ State.regrasPreventivas = this.load('regras_preventivas') || [] };
+
+// Função auxiliar para extrair números do horímetro (ex: "1250h" vira 1250)
+function parseHorimetroNum(h) { 
+  if(!h) return 0; 
+  return parseInt(String(h).replace(/[^0-9]/g, '')) || 0; 
+}
+
 var Preventivas = {
-  init: function() { Storage.loadPreventivas(); this.renderRegras(); this.atualizarStatus(); },
-  novaRegra: function() {
-    var desc = prompt("Descrição da regra (ex: Troca de Óleo do Motor):");
-    if(!desc) return;
-    var intervalo = parseInt(prompt("Intervalo em horas (ex: 500):"));
-    if(isNaN(intervalo) || intervalo <= 0) { showToast("Intervalo inválido", true); return; }
-    State.preventivasRegras.push({ id: Date.now(), descricao: desc, intervalo_horas: intervalo });
-    Storage.savePreventivas(); this.renderRegras(); this.atualizarStatus(); showToast("Regra adicionada");
+  init: function() {
+    Storage.loadRegrasPreventivas();
+    this.populateMarcas();
+    this.renderRegras();
+    this.calcularProximas();
   },
-  salvarRegra: function(id, campo, valor) {
-    var idx = State.preventivasRegras.findIndex(r => r.id == id);
-    if(idx === -1) return;
-    if(campo === 'descricao') State.preventivasRegras[idx].descricao = valor;
-    else if(campo === 'intervalo') State.preventivasRegras[idx].intervalo_horas = parseInt(valor);
-    Storage.savePreventivas(); this.atualizarStatus();
-  },
-  excluirRegra: function(id) {
-    if(confirm("Excluir regra?")) { State.preventivasRegras = State.preventivasRegras.filter(r => r.id != id); Storage.savePreventivas(); this.renderRegras(); this.atualizarStatus(); showToast("Regra excluída"); }
-  },
-  renderRegras: function() {
-    var container = $('#preventivasRegrasList');
-    if(!container) return;
-    if(!State.preventivasRegras.length) { container.innerHTML = '<div class="text-center py-4 text-[var(--muted)]">Nenhuma regra cadastrada. Clique em "Nova Regra".</div>'; return; }
-    var html = '<div class="space-y-3">';
-    State.preventivasRegras.forEach(r => { html += '<div class="flex flex-wrap items-center gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border)]"><input type="text" value="'+esc(r.descricao)+'" onchange="Preventivas.salvarRegra('+r.id+',\'descricao\',this.value)" class="form-input flex-1 min-w-[150px]"><span class="text-sm">a cada</span><input type="number" value="'+r.intervalo_horas+'" onchange="Preventivas.salvarRegra('+r.id+',\'intervalo\',this.value)" class="form-input w-24 text-center"><span class="text-sm">horas</span><button onclick="Preventivas.excluirRegra('+r.id+')" class="text-red-500"><i class="fas fa-trash"></i></button></div>'; });
-    html += '</div>'; container.innerHTML = html;
-  },
-  getUltimoHorimetroPorEquipamento: function(clienteNome, modelo, serie) {
-    var ultimo = null;
-    State.osHistory.forEach(function(os) {
-      if(os.status !== 'aprovada' && os.status !== 'fechada') return;
-      if(os.cliente !== clienteNome) return;
-      var match = true;
-      if(modelo && os.modelo && os.modelo.toLowerCase() !== modelo.toLowerCase()) match = false;
-      if(serie && os.numSerie && os.numSerie !== serie) match = false;
-      if(!match) return;
-      var hor = os.horimetro ? parseInt(os.horimetro.replace(/[^0-9]/g,'')) : null;
-      if(hor && !isNaN(hor)) { if(ultimo === null || hor > ultimo) ultimo = hor; }
+
+  populateMarcas: function() {
+    var s = $('prev_marca');
+    if(!s) return;
+    s.innerHTML = '<option value="">Todas as Marcas</option>';
+    Config.marcas.forEach(function(m) {
+      if(m !== 'OUTRA') s.innerHTML += '<option value="'+m+'">'+m+'</option>';
     });
-    return ultimo;
   },
-  atualizarStatus: function() {
-    var tbody = $('#preventivasStatusBody'), emptyDiv = $('#preventivasEmpty');
-    if(!tbody) return;
-    tbody.innerHTML = '';
-    var equipamentos = [];
-    State.clients.forEach(cli => { if(cli.equipamentos && cli.equipamentos.length) { cli.equipamentos.forEach(eq => { equipamentos.push({ cliente: cli.nome, marca: eq.marca, modelo: eq.modelo, serie: eq.serie, combustivel: eq.combustivel }); }); } });
-    State.osHistory.forEach(os => { if(!os.cliente) return; var existe = equipamentos.some(eq => eq.cliente === os.cliente && eq.modelo === os.modelo && eq.serie === os.numSerie); if(!existe && (os.modelo || os.numSerie)) equipamentos.push({ cliente: os.cliente, marca: os.marca, modelo: os.modelo, serie: os.numSerie, combustivel: os.combustivel }); });
-    if(equipamentos.length === 0) { if(emptyDiv) emptyDiv.classList.remove('hidden'); return; }
-    if(emptyDiv) emptyDiv.classList.add('hidden');
-    equipamentos.forEach(function(eq) {
-      var ultimoHor = Preventivas.getUltimoHorimetroPorEquipamento(eq.cliente, eq.modelo, eq.serie);
-      var linha = '<tr>';
-      linha += '<td><strong>' + esc((eq.marca||'') + ' ' + (eq.modelo||'')) + '</strong><br><span class="text-xs text-[var(--muted)]">Série: ' + esc(eq.serie||'N/I') + '</span></td>';
-      linha += '<td>' + esc(eq.cliente) + '</td>';
-      linha += '<td class="font-mono">' + (ultimoHor !== null ? ultimoHor + ' h' : 'N/A') + '</td>';
-      var proximaInfo = { horasProx: null, statusText: 'Sem dados', statusClass: 'text-[var(--muted)]', regrasAplicadas: [] };
-      if(ultimoHor !== null) {
-        var menorProxima = null;
-        State.preventivasRegras.forEach(function(regra) {
-          var prox = Math.floor(ultimoHor / regra.intervalo_horas) * regra.intervalo_horas + regra.intervalo_horas;
-          var faltam = prox - ultimoHor;
-          proximaInfo.regrasAplicadas.push(regra.descricao + ' (' + regra.intervalo_horas + 'h) → em ' + faltam + 'h');
-          if(menorProxima === null || prox < menorProxima) menorProxima = prox;
-        });
-        if(menorProxima !== null) {
-          var faltamTotal = menorProxima - ultimoHor;
-          proximaInfo.horasProx = menorProxima;
-          if(faltamTotal <= 0) { proximaInfo.statusText = 'VENCIDO'; proximaInfo.statusClass = 'text-[var(--danger)] font-bold'; }
-          else if(faltamTotal <= 50) { proximaInfo.statusText = 'PRÓXIMO (≤ 50h)'; proximaInfo.statusClass = 'text-[var(--warning)] font-bold'; }
-          else { proximaInfo.statusText = 'OK'; proximaInfo.statusClass = 'text-[var(--success)]'; }
-        }
+
+  salvarRegra: async function() {
+    var desc = Utils.getVal('prev_descricao').trim();
+    var intervalo = parseInt(Utils.getVal('prev_intervalo'));
+    if(!desc || !intervalo || intervalo <= 0) {
+      showToast('Preencha Descrição e Intervalo de horas', true);
+      return;
+    }
+
+    var editId = Utils.getVal('prev_editId');
+    var regra = {
+      id: editId || Date.now(),
+      descricao: desc,
+      intervalo: intervalo,
+      marca: Utils.getVal('prev_marca'),
+      modelo: Utils.getVal('prev_modelo').trim()
+    };
+
+    if(editId) {
+      var idx = State.regrasPreventivas.findIndex(function(r){ return r.id == editId });
+      if(idx >= 0) State.regrasPreventivas[idx] = regra;
+    } else {
+      State.regrasPreventivas.push(regra);
+    }
+
+    Storage.saveRegrasPreventivas();
+    this.cancelarEdicao();
+    this.renderRegras();
+    this.calcularProximas();
+    showToast('Regra salva!');
+    // SyncQueue.add('upsert','regra_preventiva', regra); // Descomente se criar a sheet no Google
+  },
+
+  editarRegra: function(id) {
+    var r = State.regrasPreventivas.find(function(x){ return x.id === id });
+    if(!r) return;
+    Utils.setVal('prev_editId', r.id);
+    Utils.setVal('prev_descricao', r.descricao);
+    Utils.setVal('prev_intervalo', r.intervalo);
+    Utils.setVal('prev_marca', r.marca);
+    Utils.setVal('prev_modelo', r.modelo);
+    $('btnPrevCancelar').style.display = 'inline-flex';
+  },
+
+  cancelarEdicao: function() {
+    Utils.setVal('prev_editId', '');
+    Utils.setVal('prev_descricao', '');
+    Utils.setVal('prev_intervalo', '');
+    Utils.setVal('prev_marca', '');
+    Utils.setVal('prev_modelo', '');
+    $('btnPrevCancelar').style.display = 'none';
+  },
+
+  excluirRegra: function(id) {
+    if(!confirm('Excluir regra?')) return;
+    State.regrasPreventivas = State.regrasPreventivas.filter(function(r){ return r.id !== id });
+    Storage.saveRegrasPreventivas();
+    this.renderRegras();
+    this.calcularProximas();
+  },
+
+  renderRegras: function() {
+    var tb = $('prevRegrasBody');
+    if(!tb) return;
+    tb.innerHTML = '';
+    if(!State.regrasPreventivas.length) {
+      tb.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-[var(--muted)]">Nenhuma regra cadastrada</td></tr>';
+      return;
+    }
+    State.regrasPreventivas.forEach(function(r) {
+      var row = tb.insertRow();
+      row.innerHTML = '<td class="font-medium">'+esc(r.descricao)+'</td>'+
+                      '<td class="font-mono font-bold">'+r.intervalo+'h</td>'+
+                      '<td>'+(r.marca||'Todas')+'</td>'+
+                      '<td>'+(r.modelo||'Todos')+'</td>'+
+                      '<td><i class="fas fa-edit text-blue-400 cursor-pointer mr-2" onclick="Preventivas.editarRegra('+r.id+')"></i> <i class="fas fa-trash text-red-400 cursor-pointer" onclick="Preventivas.excluirRegra('+r.id+')"></i></td>';
+    });
+  },
+
+  calcularProximas: function() {
+    var tb = $('prevPrevisaoBody');
+    if(!tb) return;
+    tb.innerHTML = '';
+
+    if(!State.regrasPreventivas.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-[var(--muted)]">Cadastre regras acima para ver as previsões</td></tr>';
+      return;
+    }
+
+    // 1. Agrupar os equipamentos por Cliente + Marca + Modelo e pegar o MAIOR horímetro
+    var equipamentos = {};
+    State.osHistory.forEach(function(os) {
+      if(!os.marca && !os.modelo) return;
+      var key = (os.cliente||'N/A') + '|' + (os.marca||'N/A') + '|' + (os.modelo||'N/A');
+      var h = parseHorimetroNum(os.horimetro);
+      if(!equipamentos[key] || h > equipamentos[key].horas) {
+        equipamentos[key] = {
+          cliente: os.cliente || 'N/A',
+          marca: os.marca || 'N/A',
+          modelo: os.modelo || 'N/A',
+          serie: os.numSerie || '',
+          horas: h
+        };
       }
-      linha += '<td class="font-mono">' + (proximaInfo.horasProx ? proximaInfo.horasProx + ' h' : '—') + '</td>';
-      linha += '<td class="' + proximaInfo.statusClass + '">' + proximaInfo.statusText + '</td>';
-      linha += '<td class="text-xs">' + (proximaInfo.regrasAplicadas.length ? proximaInfo.regrasAplicadas.join('<br>') : 'Nenhuma regra') + '</td>';
-      linha += '</tr>';
-      tbody.innerHTML += linha;
+    });
+
+    // 2. Cruzar equipamentos com as regras
+    var previsoes = [];
+    for(var key in equipamentos) {
+      var eq = equipamentos[key];
+      if(eq.horas === 0) continue; // Ignora se nunca teve horímetro lançado
+
+      State.regrasPreventivas.forEach(function(regra) {
+        var serveMarca = !regra.marca || regra.marca === eq.marca;
+        var serveModelo = !regra.modelo || regra.modelo.toLowerCase() === eq.modelo.toLowerCase();
+        
+        if(serveMarca && serveModelo) {
+          // Calcula quando foi a última prevenção (assumindo que começou do 0 ou baseado em múltiplos)
+          var ultimaPrevencao = Math.floor(eq.horas / regra.intervalo) * regra.intervalo;
+          var proximaPrevencao = ultimaPrevencao + regra.intervalo;
+          var horasRestantes = proximaPrevencao - eq.horas;
+
+          var statusTxt, statusCls;
+          if(horasRestantes <= 0) {
+            statusTxt = 'VENCIDA'; statusCls = 'stock-zero';
+          } else if(horasRestantes <= 50) {
+            statusTxt = 'CRÍTICO ('+horasRestantes+'h)'; statusCls = 'stock-low';
+          } else {
+            statusTxt = 'OK ('+horasRestantes+'h)'; statusCls = 'stock-ok';
+          }
+
+          previsoes.push({
+            cliente: eq.cliente,
+            equipamento: eq.marca + ' ' + eq.modelo + (eq.serie ? ' ('+eq.serie+')' : ''),
+            horasAtuais: eq.horas,
+            servico: regra.descricao,
+            proxima: proximaPrevencao,
+            statusTxt: statusTxt,
+            statusCls: statusCls
+          });
+        }
+      });
+    }
+
+    // 3. Renderizar tabela
+    if(!previsoes.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-[var(--muted)]">Nenhum equipamento com horímetro encontrado para as regras cadastradas</td></tr>';
+      return;
+    }
+
+    // Ordenar: Vencidas primeiro, depois Crítico, depois OK
+    previsoes.sort(function(a, b) {
+      if(a.statusCls === 'stock-zero') return -1;
+      if(b.statusCls === 'stock-zero') return 1;
+      if(a.statusCls === 'stock-low') return -1;
+      if(b.statusCls === 'stock-low') return 1;
+      return 0;
+    });
+
+    previsoes.forEach(function(p) {
+      var row = tb.insertRow();
+      row.innerHTML = '<td class="font-medium">'+esc(p.cliente).toUpperCase()+'</td>'+
+                      '<td>'+esc(p.equipamento)+'</td>'+
+                      '<td class="font-mono font-bold">'+p.horasAtuais+'h</td>'+
+                      '<td>'+esc(p.servico)+'</td>'+
+                      '<td class="font-mono font-bold">'+p.proxima+'h</td>'+
+                      '<td><span class="px-2 py-1 rounded-full text-xs font-bold '+p.statusCls+'">'+p.statusTxt+'</span></td>';
     });
   }
 };
@@ -1268,6 +1403,7 @@ document.addEventListener('DOMContentLoaded',function(){
     $('appContainer').style.display='none';
     SyncUI.set('Offline','offline')
   }else{
+    Preventivas.init();
     App.init()
   }
 });
@@ -1292,7 +1428,24 @@ document.addEventListener('DOMContentLoaded',function(){
   function hide(){if(hidden||!header)return;hidden=true;header.classList.add('header-hidden');if(indicator)indicator.classList.add('visible')}
   function show(){if(!hidden||!header)return;hidden=false;header.classList.remove('header-hidden');if(indicator)indicator.classList.remove('visible')}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
-})();
+};
+
+// ==========================================
+// AJUSTE FINAL PARA GARANTIR RENDERIZAÇÃO
+// ==========================================
+(function(){
+  // Aguarda o App.init() terminar e força a atualização da preventiva
+  var originalInit = App.init;
+  App.init = function() {
+    originalInit.apply(this, arguments);
+    // Pequeno delay para garantir que os dados da planilha já foram carregados
+    setTimeout(function() {
+      if(typeof Preventivas !== 'undefined' && Preventivas.calcularProximas) {
+        Preventivas.calcularProximas();
+      }
+    }, 2000);
+  };
+})()
 </script>
 </body>
 </html>
