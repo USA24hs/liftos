@@ -252,7 +252,22 @@
     .notif-bell:hover{border-color:var(--warning);background:var(--card)}
     .notif-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;animation:notifPop .4s ease}
     @keyframes notifPop{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
-    .notif-dropdown{position:absolute;top:calc(100% + 8px);right:0;width:360px;max-height:450px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.6);z-index:160;display:none;overflow:hidden;flex-direction:column}
+     .notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%; /* Move o lado esquerdo do dropdown para o meio do elemento pai */
+  transform: translateX(-50%); /* Puxa o dropdown de volta 50% do seu próprio tamanho, centralizando-o */
+  width: 360px;
+  max-height: 450px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.6);
+  z-index: 160;
+  display: none;
+  overflow: hidden;
+  flex-direction: column;
+}
     .notif-dropdown.open{display:flex;animation:dropIn .2s ease}
     .notif-dropdown-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
     .notif-dropdown-header h4{font-size:.85rem;font-weight:700;color:var(--accent);margin:0}
@@ -360,8 +375,8 @@
             </div>
             <div class="notif-dropdown" id="notifDropdown">
               <div class="notif-dropdown-header">
-                <h4><i class="fas fa-bell" style="margin-right:6px"></i> Notificações</h4>
-                <button onclick="event.stopPropagation();Notificacoes.marcarTodasLidas()" class="text-xs text-[var(--accent)] hover:underline bg-transparent border-none cursor-pointer">Marcar todas</button>
+                <h4><i class="fas fa-bell" style="margin-right:6px"></i>Notificações &nbsp;&nbsp;&nbsp;</h4>
+                <button onclick="event.stopPropagation();Notificacoes.marcarTodasLidas()" class="text-xs text-[var(--accent)] hover:underline bg-transparent border-none cursor-pointer">&nbsp;&nbsp;&nbsp;Marcar todas</button>
               </div>
               <div class="notif-dropdown-body" id="notifList"></div>
             </div>
@@ -1411,25 +1426,56 @@ document.addEventListener('DOMContentLoaded',function(){
 <div class="header-pull-indicator" id="headerPullIndicator"></div>
 <script>
 (function(){
-  var header=null,indicator=null,lastScrollY=0,ticking=false,isMobile=false,hidden=false,scrollThreshold=8,TOUCH_ZONE=18;
-  function checkMobile(){isMobile=window.innerWidth<=768}
-  function init(){
-    header=document.querySelector('header.no-print');
-    indicator=$('headerPullIndicator');
-    if(!header)return;
-    checkMobile();
-    window.addEventListener('scroll',onScroll,{passive:true});
-    window.addEventListener('resize',function(){checkMobile();if(!isMobile&&hidden)show()});
-    if(indicator)indicator.addEventListener('click',function(){if(hidden)show()});
-    document.addEventListener('touchstart',function(e){if(!hidden||!isMobile)return;if(e.touches[0].clientY<TOUCH_ZONE)show()},{passive:true})
-  }
-  function onScroll(){if(!isMobile)return;if(!ticking){requestAnimationFrame(function(){handleScroll();ticking=false});ticking=true}}
-  function handleScroll(){var sy=window.scrollY;if(sy<60){if(hidden)show();lastScrollY=sy;return}var diff=sy-lastScrollY;if(diff>scrollThreshold){if(!hidden)hide()}else if(diff<-scrollThreshold){if(hidden)show()}lastScrollY=sy}
-  function hide(){if(hidden||!header)return;hidden=true;header.classList.add('header-hidden');if(indicator)indicator.classList.add('visible')}
-  function show(){if(!hidden||!header)return;hidden=false;header.classList.remove('header-hidden');if(indicator)indicator.classList.remove('visible')}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
-};
+  var header = document.querySelector('header.no-print');
+  if(!header) return;
+  var lastScrollY = 0;
+  var hidden = false;
+  var isMobile = window.innerWidth <= 768;
+  var scrollThreshold = 10;
 
+  function onScroll() {
+    if(!isMobile) return;
+    var currentScrollY = window.scrollY;
+    if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+      if (!hidden) {
+        hidden = true;
+        header.classList.add('header-hidden');
+        if($('headerPullIndicator')) $('headerPullIndicator').classList.add('visible');
+      }
+    } else if (currentScrollY < lastScrollY) {
+      if (hidden) {
+        hidden = false;
+        header.classList.remove('header-hidden');
+        if($('headerPullIndicator')) $('headerPullIndicator').classList.remove('visible');
+      }
+    }
+    lastScrollY = currentScrollY;
+  }
+
+  function checkMobile() {
+    isMobile = window.innerWidth <= 768;
+    if(!isMobile && hidden) {
+      hidden = false;
+      header.classList.remove('header-hidden');
+      if($('headerPullIndicator')) $('headerPullIndicator').classList.remove('visible');
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', checkMobile);
+
+  var indicator = $('headerPullIndicator');
+  if(indicator) {
+    indicator.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if(hidden) {
+        hidden = false;
+        header.classList.remove('header-hidden');
+        indicator.classList.remove('visible');
+      }
+    });
+  }
+})();
 // ==========================================
 // AJUSTE FINAL PARA GARANTIR RENDERIZAÇÃO
 // ==========================================
